@@ -1,34 +1,19 @@
 # coding: utf-8
-from flask import Flask, flash, current_app
+from flask import Flask, flash
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
+from config import config, Config
 from celery import Celery
-from config import config
 
 
 bootstrap = Bootstrap()
+celery = Celery(__name__, broker=Config.CELERY_BROKER_URL)
 
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'user.login'
 login_manager.login_message = u"Please Login."
 login_manager.login_message_category = "info"
-
-
-def make_celery(app):
-    celery = Celery(app.import_name, broker=current_app.config['CELERY_BROKER_URL'])
-    celery.conf.update(current_app.config)
-    TaskBase = celery.Task
-    class ContextTask(TaskBase):
-        abstract = True
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
-    celery.Task = ContextTask
-    return celery
-
-# Initialize Celery
-celery = make_celery( Flask(__name__))
 
 
 def flash_errors(form):
@@ -47,6 +32,7 @@ def create_app(config_name):
 
     bootstrap.init_app(app)
     login_manager.init_app(app)
+    celery.conf.update(app.config)
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
@@ -54,7 +40,7 @@ def create_app(config_name):
     from .user import user as user_blueprint
     app.register_blueprint(user_blueprint, url_prefix='/user')
 
-#    from .deploy import deploy as project_blueprint
-#    app.register_blueprint(project_blueprint, url_prefix='/deploy')
+    from .deploy import deploy as project_blueprint
+    app.register_blueprint(project_blueprint, url_prefix='/deploy')
 
     return app

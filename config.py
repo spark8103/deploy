@@ -11,6 +11,7 @@ class Config:
     # Celery configuration
     CELERY_BROKER_URL = 'redis://172.31.217.201:6379/0'
     CELERY_RESULT_BACKEND = 'redis://172.31.217.201:6379/0'
+    CELERY_TASK_SERIALIZER = 'json'
 
     @staticmethod
     def init_app(app):
