@@ -8,10 +8,8 @@ from ..jenkins_ext import jobs_list_get
 
 class AddDeployForm(FlaskForm):
     module = SelectField('Module', coerce=str, validators=[DataRequired()])
-    parameter = StringField('Parameter', validators=[DataRequired()])
+    deploy_dir = StringField('Deploy_dir', validators=[DataRequired()])
     version = StringField('Version', validators=[DataRequired()])
-    ops = SelectField('Ops', validators=[DataRequired()])
-    result = TextAreaField('Parameter', validators=[DataRequired()])
 
     def __init__(self, *args, **kwargs):
         super(AddDeployForm, self).__init__(*args, **kwargs)

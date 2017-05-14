@@ -10,6 +10,7 @@
 
 <div class="col-md-10">
     <form id="deploy_add" action="{{ url_for('deploy.deploy_module_add') }}" method="POST">
+        {{ add_deploy_form.csrf_token }}
         <div class="row">
             <div class="col-6">
                 <div class="form-group">
@@ -85,6 +86,48 @@
 {% block scripts %}
 {{ super() }}
 <script>
+function start_deploy_task() {
+    // send ajax POST request to start background job
+    $.ajax({
+        type: 'POST',
+        url: "{{ url_for('deploy.deploy_module_add') }}",
+        success: function(data, status, request) {
+            status_url = request.getResponseHeader('Location');
+            update_progress(status_url, nanobar, div[0]);
+        },
+        error: function() {
+            alert('Unexpected error');
+        }
+    });
+}
+
+function update_progress(status_url, nanobar, status_div) {
+    // send GET request to status URL
+    $.getJSON(status_url, function(data) {
+        // update UI
+        percent = parseInt(data['current'] * 100 / data['total']);
+        nanobar.go(percent);
+        $(status_div.childNodes[1]).text(percent + '%');
+        $(status_div.childNodes[2]).text(data['status']);
+        if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+            if ('result' in data) {
+                // show result
+                $(status_div.childNodes[3]).text('Result: ' + data['result']);
+            }
+            else {
+                // something unexpected happened
+                $(status_div.childNodes[3]).text('Result: ' + data['state']);
+            }
+        }
+        else {
+            // rerun in 2 seconds
+            setTimeout(function() {
+                update_progress(status_url, nanobar, status_div);
+            }, 2000);
+        }
+    });
+}
+
 $(function() {
     $('#module').change(function() {
         var url = "{{ url_for('deploy.jenkins_job_number') }}?job_name=" + $('#module').val()
@@ -97,11 +140,20 @@ $(function() {
     });
 
     $('#deploy_add').submit(function(event) {
+        var url = "{{ url_for('deploy.deploy_module_add') }}";
+        var csrf_token = $('#csrf_token').val();
         var module = $('#module').val();
         var version = $('#version').val();
-        var deploy_dir = []
+        var deploy_dir = [];
         $('input:checkbox[name=deploy_dir]:checked').each(function(){
             deploy_dir.push($(this).val());
+        });
+        alert(deploy_dir);
+
+        $.post(url,
+            {'csrf_token':csrf_token, 'module':module , 'deploy_dir':deploy_dir, 'version': version},
+            function (result){
+            alert(result);
         });
         event.preventDefault();
     });

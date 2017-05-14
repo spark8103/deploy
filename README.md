@@ -17,4 +17,5 @@ python manage.py runserver --threaded
 ```
 
 ## reference
-[celery-and-the-flask-application-factory-pattern](https://blog.miguelgrinberg.com/post/celery-and-the-flask-application-factory-pattern)
+ * [celery-and-the-flask-application-factory-pattern](https://blog.miguelgrinberg.com/post/celery-and-the-flask-application-factory-pattern)
+ * [flansible](https://github.com/trondhindenes/flansible.git)

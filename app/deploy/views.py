@@ -1,11 +1,13 @@
 # coding: utf-8
-from flask import render_template, redirect, request, url_for, flash, \
-    jsonify
+from flask import render_template, redirect, request, url_for, flash, jsonify, make_response
 from flask_login import login_required, current_user
 from . import deploy
 from .. import flash_errors
 from .forms import AddDeployForm, JenkinsExecForm
 from ..jenkins_ext import job_get_number, job_build
+from config import Config
+from .. import celery_runner
+import os
 
 
 @deploy.route('/deploy-module')
@@ -19,11 +21,38 @@ def deploy_module():
 @login_required
 def deploy_module_add():
     form = AddDeployForm(data=request.get_json())
+    print Config.BASE_DIR
+    print form.data
+    command = os.path.join(Config.BASE_DIR, 'scripts\\test.py')
+    print command
+    task_result = celery_runner.do_long_running_task.apply_async([command])
+    print task_result
+    result = {'task_id': task_result.id}
     if form.validate_on_submit():
         flash('deploy: ' + form.module.data + 'is success.')
     else:
         flash_errors(form)
-    return redirect(url_for('.deploy_main'))
+    return jsonify(result)
+
+
+@deploy.route('/deploy-module-status/<string:task_id>')
+@login_required
+def deploy_module_status(task_id):
+    task = celery_runner.do_long_running_task.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        result = "Task not found"
+        resp = make_response((result, 404))
+        return resp
+    if task.state == "PROGRESS":
+        result = task.info['output']
+    else:
+        result = task.info['output']
+    # result_out = task.info.replace('\n', "<br>")
+    # result = result.replace('\n', '<br>')
+    # return result, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    resp = make_response((result, 200))
+    resp.headers['content-type'] = 'text/plain'
+    return resp
 
 
 @deploy.route('/deploy-module-history')
