@@ -1,9 +1,9 @@
-import jenkins
-import time
+import jenkins, time
+from config import Config
 
-jenkins_url = 'http://172.31.217.62:8080/'
-jenkins_username = 'zhangchuanshuang'
-jenkins_password = 'XpqXvYy7rc5jyKMuw4'
+jenkins_url = Config.JENKINS_URL
+jenkins_username = Config.JENKINS_USER
+jenkins_password = Config.JENKINS_TOKEN
 
 
 def jobs_list_get():
@@ -30,12 +30,14 @@ def job_build(job_name):
 def job_get_number(job_name):
     server = jenkins.Jenkins(jenkins_url, username=jenkins_username, password=jenkins_password)
     job_info = server.get_job_info(job_name)
-    pass
+    last_number = job_info['lastCompletedBuild']['number']
+    return range((last_number - 4), (last_number + 1))[::-1]
+
 
 # from app.jenkins_ext import jobs_list_get, job_build
 
 # bd-blink-server
-# server = jenkins.Jenkins('http://172.31.217.62:8080/', username='zhangchuanshuang', password='XpqXvYy7rc5jyKMuw4')
+# server = jenkins.Jenkins(jenkins_url, username=jenkins_username, password=jenkins_password)
 # user = server.get_whoami()
 # version = server.get_version()
 

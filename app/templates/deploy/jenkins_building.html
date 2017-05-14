@@ -43,7 +43,7 @@
 <script src="{{ url_for('static', filename='js/PerfectLoad.js') }}"></script>
 
 <script>
-$( "#jenkins_building" ).submit(function( event ) {
+$( "#jenkins_building" ).submit(function(event) {
     var job_name = $('#job').val()
     $('#result').empty();
     $('#result').append("<img src=\"/static/images/loading.gif\" /><span class=\"text-warning\"><strong>" + job_name + "</strong> is Building...</sparn>");

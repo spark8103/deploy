@@ -41,7 +41,7 @@ def server_shutdown():
 @main.route('/')
 @login_required
 def index():
-    print current_user.username
+    # print current_user.username
     return render_template('index.html')
 
 

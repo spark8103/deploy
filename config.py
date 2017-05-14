@@ -13,6 +13,11 @@ class Config:
     CELERY_RESULT_BACKEND = 'redis://172.31.217.201:6379/0'
     CELERY_TASK_SERIALIZER = 'json'
 
+    # Jenkins configuration
+    JENKINS_URL = 'http://172.31.217.62:8080/'
+    JENKINS_USER = 'zhangchuanshuang'
+    JENKINS_TOKEN = '017f91b93c065934218aed003e1475fe'
+
     @staticmethod
     def init_app(app):
         pass
