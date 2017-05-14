@@ -21,23 +21,21 @@ def deploy_module():
 @login_required
 def deploy_module_add():
     form = AddDeployForm(data=request.get_json())
-    print Config.BASE_DIR
-    print form.data
-    command = os.path.join(Config.BASE_DIR, 'scripts\\test.py')
-    print command
-    task_result = celery_runner.do_long_running_task.apply_async([command])
-    print task_result
-    result = {'task_id': task_result.id}
     if form.validate_on_submit():
-        flash('deploy: ' + form.module.data + 'is success.')
+        module = form.module.data
+        version = form.version.data
+        deploy_dir = request.form.getlist("deploy_dir[]")
+        command = os.path.join(Config.BASE_DIR, 'scripts\\test.py')
+        task_result = celery_runner.do_long_running_task.apply_async([command])
+        result = {'r': 0, 'task_id': task_result.id}
     else:
-        flash_errors(form)
+        result = {'r': 1, 'error': form.errors}
     return jsonify(result)
 
 
-@deploy.route('/deploy-module-status/<string:task_id>')
+@deploy.route('/deploy-module-output/<string:task_id>')
 @login_required
-def deploy_module_status(task_id):
+def deploy_module_output(task_id):
     task = celery_runner.do_long_running_task.AsyncResult(task_id)
     if task.state == 'PENDING':
         result = "Task not found"
@@ -53,6 +51,35 @@ def deploy_module_status(task_id):
     resp = make_response((result, 200))
     resp.headers['content-type'] = 'text/plain'
     return resp
+
+
+@deploy.route('/deploy-module-status/<string:task_id>')
+@login_required
+def deploy_module_status(task_id):
+    task = celery_runner.do_long_running_task.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        result = "Task not found"
+        resp = make_response((result, 404))
+        return resp
+    if task.state == "PROGRESS":
+        result_obj = {'Status': "PROGRESS",
+                      'description': "Task is currently running",
+                      'returncode': None}
+    else:
+        try:
+            return_code = task.info['returncode']
+            description = task.info['description']
+            if return_code is 0:
+                result_obj = {'Status': "SUCCESS",
+                              'description': description}
+            else:
+                result_obj = {'Status': "FLANSIBLE_TASK_FAILURE",
+                              'description': description,
+                              'returncode': return_code}
+        except:
+            result_obj = {'Status': "CELERY_FAILURE"}
+
+    return jsonify(result_obj)
 
 
 @deploy.route('/deploy-module-history')

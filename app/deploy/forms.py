@@ -1,14 +1,14 @@
 # coding: utf-8
 from flask import current_app
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField
-from wtforms.validators import DataRequired
+from wtforms import StringField, TextAreaField, SelectField, SelectMultipleField
+from wtforms.validators import DataRequired, InputRequired
 from ..jenkins_ext import jobs_list_get
 
 
 class AddDeployForm(FlaskForm):
     module = SelectField('Module', coerce=str, validators=[DataRequired()])
-    deploy_dir = StringField('Deploy_dir', validators=[DataRequired()])
+    deploy_dir = SelectMultipleField('Deploy_dir')
     version = StringField('Version', validators=[DataRequired()])
 
     def __init__(self, *args, **kwargs):

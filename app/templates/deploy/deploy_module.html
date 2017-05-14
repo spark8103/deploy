@@ -130,7 +130,12 @@ function update_progress(status_url, nanobar, status_div) {
 
 $(function() {
     $('#module').change(function() {
-        var url = "{{ url_for('deploy.jenkins_job_number') }}?job_name=" + $('#module').val()
+        if($('#module').val() == 0){
+            $("#version").empty();
+            $("#version").append("<option value=\"0\">Choose...</option>");
+            return false;
+        }
+        var url = "{{ url_for('deploy.jenkins_job_number') }}?job_name=" + $('#module').val();
         $.get(url, function(result){
             $("#version").empty(); //clean select option
             for(var item in result){
@@ -148,12 +153,11 @@ $(function() {
         $('input:checkbox[name=deploy_dir]:checked').each(function(){
             deploy_dir.push($(this).val());
         });
-        alert(deploy_dir);
 
         $.post(url,
             {'csrf_token':csrf_token, 'module':module , 'deploy_dir':deploy_dir, 'version': version},
             function (result){
-            alert(result);
+            alert(result["task_id"]);
         });
         event.preventDefault();
     });
