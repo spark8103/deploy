@@ -87,13 +87,23 @@
 {{ super() }}
 <script>
 function start_deploy_task() {
+    var url = "{{ url_for('deploy.deploy_module_add') }}";
+    var csrf_token = $('#csrf_token').val();
+    var module = $('#module').val();
+    var version = $('#version').val();
+    var deploy_dir = [];
+    $('input:checkbox[name=deploy_dir]:checked').each(function(){
+        deploy_dir.push($(this).val());
+    });
+
     // send ajax POST request to start background job
     $.ajax({
         type: 'POST',
-        url: "{{ url_for('deploy.deploy_module_add') }}",
+        data: {'csrf_token':csrf_token, 'module':module , 'deploy_dir':deploy_dir, 'version': version},
+        url: url,
         success: function(data, status, request) {
             status_url = request.getResponseHeader('Location');
-            update_progress(status_url, nanobar, div[0]);
+            update_progress(status_url);
         },
         error: function() {
             alert('Unexpected error');
@@ -101,28 +111,26 @@ function start_deploy_task() {
     });
 }
 
-function update_progress(status_url, nanobar, status_div) {
+function update_progress(status_url) {
     // send GET request to status URL
     $.getJSON(status_url, function(data) {
         // update UI
-        percent = parseInt(data['current'] * 100 / data['total']);
-        nanobar.go(percent);
-        $(status_div.childNodes[1]).text(percent + '%');
-        $(status_div.childNodes[2]).text(data['status']);
         if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
             if ('result' in data) {
                 // show result
-                $(status_div.childNodes[3]).text('Result: ' + data['result']);
+                $('#result').empty();
+                $('#result').append(data['result']);
             }
             else {
                 // something unexpected happened
-                $(status_div.childNodes[3]).text('Result: ' + data['state']);
+                $('#result').empty();
+                $('#result').append("<img src=\"/static/images/loading.gif\" /><span class=\"text-warning\"><strong>" + job_name + "</strong> is Building...</sparn>");
             }
         }
         else {
             // rerun in 2 seconds
             setTimeout(function() {
-                update_progress(status_url, nanobar, status_div);
+                update_progress(status_url);
             }, 2000);
         }
     });
@@ -145,6 +153,8 @@ $(function() {
     });
 
     $('#deploy_add').submit(function(event) {
+        start_deploy_task();
+        /*
         var url = "{{ url_for('deploy.deploy_module_add') }}";
         var csrf_token = $('#csrf_token').val();
         var module = $('#module').val();
@@ -157,8 +167,13 @@ $(function() {
         $.post(url,
             {'csrf_token':csrf_token, 'module':module , 'deploy_dir':deploy_dir, 'version': version},
             function (result){
-            alert(result["task_id"]);
+            if(result["r"] == 0){
+
+            }
+            alert(result["r"]);
+            alert(rsult["task_id"]);
         });
+        */
         event.preventDefault();
     });
 });

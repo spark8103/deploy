@@ -34,6 +34,12 @@ def job_get_number(job_name):
     return range((last_number - 4), (last_number + 1))[::-1]
 
 
+def job_get_svn(job_name):
+    server = jenkins.Jenkins(jenkins_url, username=jenkins_username, password=jenkins_password)
+    job_info = server.get_job_info(job_name)
+    svn_url = job_info['url']
+    return svn_url
+
 # from app.jenkins_ext import jobs_list_get, job_build
 
 # bd-blink-server

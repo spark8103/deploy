@@ -19,6 +19,11 @@ class Config:
     JENKINS_USER = 'zhangchuanshuang'
     JENKINS_TOKEN = '017f91b93c065934218aed003e1475fe'
 
+    # SVN configuration
+    SVN_URL = 'http://10.205.59.16/svn/'
+    SVN_USER = "apprun"
+    SVN_PASSWORD = "apprun"
+
     @staticmethod
     def init_app(app):
         pass
