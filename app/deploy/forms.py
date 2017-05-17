@@ -18,6 +18,7 @@ class AddDeployForm(FlaskForm):
 
 class JenkinsExecForm(FlaskForm):
     job = SelectField('Select Exec Job', coerce=str, validators=[DataRequired()])
+    tag = StringField('Select tag')
 
     def __init__(self, *args, **kwargs):
         super(JenkinsExecForm, self).__init__(*args, **kwargs)

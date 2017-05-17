@@ -5,6 +5,7 @@
 ## Init
 ### Install requirements
 pip install -r requirements/requirements.txt
+install svn client.
 
 ### start celer_work
 ```shell

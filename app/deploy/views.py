@@ -4,7 +4,8 @@ from flask_login import login_required, current_user
 from . import deploy
 from .. import flash_errors
 from .forms import AddDeployForm, JenkinsExecForm
-from ..jenkins_ext import job_get_number, job_build
+from ..jenkins_ext import job_get_number, job_build, job_get_svn
+from ..svn_ext import svn_tag_list
 from config import Config
 from .. import celery_runner
 import os
@@ -92,6 +93,8 @@ def deploy_module_history():
 @login_required
 def jenkins_building():
     form = JenkinsExecForm()
+    print form.data
+    print form.validate_on_submit()
     if form.validate_on_submit():
         job = form.job.data
         result = job_build(job)
@@ -107,5 +110,20 @@ def jenkins_job_number():
     job_name = request.args.get('job_name')
     if job_name:
         return jsonify(job_get_number(job_name))
+    else:
+        return jsonify({})
+
+
+@deploy.route('/svn-tags')
+@login_required
+def svn_tags():
+    job_name = request.args.get('job_name')
+    if job_name:
+        svn_url = job_get_svn(job_name)
+        if svn_url['tag_dir']:
+            svn_tag = svn_tag_list(svn_url['tag_dir'], job_name)
+        else:
+            svn_tag = {}
+        return jsonify(svn_tag)
     else:
         return jsonify({})
