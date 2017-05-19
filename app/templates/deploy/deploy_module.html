@@ -102,8 +102,14 @@ function start_deploy_task() {
         data: {'csrf_token':csrf_token, 'module':module , 'deploy_dir':deploy_dir, 'version': version},
         url: url,
         success: function(data, status, request) {
-            status_url = request.getResponseHeader('Location');
-            update_progress(status_url);
+            if (data['r']==0){
+                status_url = data['Location'];
+                console.log("status_url: " + status_url);
+                update_progress(status_url);
+            }else{
+                alert(data['error']);
+                console.log(data['error']);
+            }
         },
         error: function() {
             alert('Unexpected error');
@@ -114,20 +120,39 @@ function start_deploy_task() {
 function update_progress(status_url) {
     // send GET request to status URL
     $.getJSON(status_url, function(data) {
+        var module_name = $('#module').val();
+        var version = $('#version').val();
+        var deploy_dir = [];
+        $('input:checkbox[name=deploy_dir]:checked').each(function(){
+            deploy_dir.push($(this).val());
+        });
         // update UI
-        if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
-            if ('result' in data) {
+        $('#result').empty();
+        $('#result').append("<img src=\"/static/images/loading.gif\" /><span class=\"text-warning\"><strong>" + module_name + "</strong> is Deploying...</sparn>");
+        console.log(data['Status']);
+        if (data['Status'] != 'PENDING' && data['Status'] != 'PROGRESS') {
+            html = "<p class=\"text-primary\">Module: <strong>" + module_name + "</strong></p>" +
+                "<p class=\"text-primary\">Version: <strong>" + version + "</strong></p>" +
+                "<p class=\"text-primary\">Deploy_dir: <strong>" + deploy_dir + "</strong></p>" +
+                "<p class=\"bg-primary text-warning\">Status: </p>";
+
+            if (data['Status'] == 'SUCCESS') {
                 // show result
                 $('#result').empty();
-                $('#result').append(data['result']);
-            }
-            else {
+                result = html + "<strong>Deploy is " + data['Status'] + '</strong><br />' + data['Out'].replace(/\r\n/g, '<br />');
+                $('#result').append(result);
+            }else if(data['Status'] == 'CELERY_FAILURE'){
                 // something unexpected happened
                 $('#result').empty();
-                $('#result').append("<img src=\"/static/images/loading.gif\" /><span class=\"text-warning\"><strong>" + job_name + "</strong> is Building...</sparn>");
+                result = html + "<strong>Deploy is " + data['Status'] +  ".</strong><br />";
+                $('#result').append(result);
+            } else {
+                // something unexpected happened
+                $('#result').empty();
+                result = html + "<strong>Deploy is " + data['Status'] +  '</strong><br />' +  data['Out'].replace(/\r\n/g, '<br />');
+                $('#result').append(result);
             }
-        }
-        else {
+        } else {
             // rerun in 2 seconds
             setTimeout(function() {
                 update_progress(status_url);

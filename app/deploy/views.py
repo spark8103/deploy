@@ -25,33 +25,18 @@ def deploy_module_add():
     if form.validate_on_submit():
         module = form.module.data
         version = form.version.data
-        deploy_dir = request.form.getlist("deploy_dir[]")
-        command = os.path.join(Config.BASE_DIR, 'scripts\\test.py')
+        deploy_dir = ','.join(request.form.getlist("deploy_dir[]"))
+        exec_script = os.path.join(Config.BASE_DIR, 'scripts\\test.py')
+        #command = str.format("{0} module={1} version={2} deploy_dir={3}", exec_script, module, version, deploy_dir)
+        command = exec_script
+        kwargs = {"module": module, "version": version, "deploy_dir": deploy_dir}
+        print command
+        print kwargs
         task_result = celery_runner.do_long_running_task.apply_async([command])
-        result = {'r': 0, 'task_id': task_result.id}
+        result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.deploy_module_status', task_id=task_result.id)}
     else:
         result = {'r': 1, 'error': form.errors}
     return jsonify(result)
-
-
-@deploy.route('/deploy-module-output/<string:task_id>')
-@login_required
-def deploy_module_output(task_id):
-    task = celery_runner.do_long_running_task.AsyncResult(task_id)
-    if task.state == 'PENDING':
-        result = "Task not found"
-        resp = make_response((result, 404))
-        return resp
-    if task.state == "PROGRESS":
-        result = task.info['output']
-    else:
-        result = task.info['output']
-    # result_out = task.info.replace('\n', "<br>")
-    # result = result.replace('\n', '<br>')
-    # return result, 200, {'Content-Type': 'text/html; charset=utf-8'}
-    resp = make_response((result, 200))
-    resp.headers['content-type'] = 'text/plain'
-    return resp
 
 
 @deploy.route('/deploy-module-status/<string:task_id>')
@@ -72,12 +57,16 @@ def deploy_module_status(task_id):
             description = task.info['description']
             if return_code is 0:
                 result_obj = {'Status': "SUCCESS",
-                              'description': description}
+                              'Out': task.info['output'].encode('utf-8').strip(),
+                              'description': description,
+                              'returncode': return_code}
             else:
                 result_obj = {'Status': "FLANSIBLE_TASK_FAILURE",
+                              'Out': task.info['output'].encode('utf-8').strip(),
                               'description': description,
                               'returncode': return_code}
         except:
+            print task.info['output']
             result_obj = {'Status': "CELERY_FAILURE"}
 
     return jsonify(result_obj)
@@ -93,8 +82,6 @@ def deploy_module_history():
 @login_required
 def jenkins_building():
     form = JenkinsExecForm()
-    print form.data
-    print form.validate_on_submit()
     if form.validate_on_submit():
         job = form.job.data
         result = job_build(job)

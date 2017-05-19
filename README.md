@@ -12,6 +12,11 @@ install svn client.
 celery worker -A celery_worker.celery -P gevent -c 10 -l INFO
 ```
 
+### flower
+```shell
+flower -A celery_worker.celery --port=5555
+```
+
 ## Run Server
 ```shell
 python manage.py runserver --threaded
