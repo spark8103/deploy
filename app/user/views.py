@@ -1,12 +1,13 @@
 # coding: utf-8
-from flask import render_template, redirect, request, url_for, flash
+from flask import render_template, redirect, request, url_for, flash, current_app
 from flask_login import login_user, logout_user, login_required, UserMixin
 from . import user
 from .forms import LoginForm
 from .. import login_manager
+from config import Config
+import time
 
-
-users = {'admin': {'password': 'admin123'}}
+users = Config.USER_LIST
 
 
 class User(UserMixin):
@@ -60,6 +61,7 @@ def login():
             user.id = username
             user.username = username
             login_user(user, form.remember_me.data)
+            print username + " is login date - " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             return redirect(request.args.get('next') or url_for('main.index'))
         flash('Invalid username or password.')
     return render_template('user/login.html', form=form)

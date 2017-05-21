@@ -134,22 +134,23 @@ function update_progress(status_url) {
             html = "<p class=\"text-primary\">Module: <strong>" + module_name + "</strong></p>" +
                 "<p class=\"text-primary\">Version: <strong>" + version + "</strong></p>" +
                 "<p class=\"text-primary\">Deploy_dir: <strong>" + deploy_dir + "</strong></p>" +
-                "<p class=\"bg-primary text-warning\">Status: </p>";
+                "<p class=\"bg-primary text-warning\">Result: </p>";
+            html = '';
 
             if (data['Status'] == 'SUCCESS') {
                 // show result
                 $('#result').empty();
-                result = html + "<strong>Deploy is " + data['Status'] + '</strong><br />' + data['Out'].replace(/\r\n/g, '<br />');
+                result = html + '<p class=\"text-primary\"><strong>Deploy is ' + data['Status'] + '</strong></p><p>' + data['Out'].replace(/\n/g, '<br />') + '</p>';
                 $('#result').append(result);
             }else if(data['Status'] == 'CELERY_FAILURE'){
                 // something unexpected happened
                 $('#result').empty();
-                result = html + "<strong>Deploy is " + data['Status'] +  ".</strong><br />";
+                result = html + '<p class=\"text-primary\"><strong><strong>Deploy is ' + data['Status'] +  '.</strong></p>';
                 $('#result').append(result);
             } else {
                 // something unexpected happened
                 $('#result').empty();
-                result = html + "<strong>Deploy is " + data['Status'] +  '</strong><br />' +  data['Out'].replace(/\r\n/g, '<br />');
+                result = html + '<p class=\"text-primary\"><strong>Deploy is ' + data['Status'] +  '</strong></p><p>' +  data['Out'].replace(/\n/g, '<br />') + '</p>';
                 $('#result').append(result);
             }
         } else {

@@ -8,7 +8,8 @@ from ..jenkins_ext import job_get_number, job_build, job_get_svn
 from ..svn_ext import svn_tag_list
 from config import Config
 from .. import celery_runner
-import os
+import os, json, urllib2, base64
+from datetime import datetime
 
 
 @deploy.route('/deploy-module')
@@ -26,13 +27,10 @@ def deploy_module_add():
         module = form.module.data
         version = form.version.data
         deploy_dir = ','.join(request.form.getlist("deploy_dir[]"))
-        exec_script = os.path.join(Config.BASE_DIR, 'scripts\\test.py')
-        #command = str.format("{0} module={1} version={2} deploy_dir={3}", exec_script, module, version, deploy_dir)
+        exec_script = Config.DEPLOY_SCRIPT
+        # command = str.format("{0} -m {1} -d {2} -v {3}", exec_script, module, deploy_dir, version)
         command = exec_script
-        kwargs = {"module": module, "version": version, "deploy_dir": deploy_dir}
-        print command
-        print kwargs
-        task_result = celery_runner.do_long_running_task.apply_async([command])
+        task_result = celery_runner.do_long_running_task.apply_async([command],kwargs={'module': module})
         result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.deploy_module_status', task_id=task_result.id)}
     else:
         result = {'r': 1, 'error': form.errors}
@@ -66,7 +64,6 @@ def deploy_module_status(task_id):
                               'description': description,
                               'returncode': return_code}
         except:
-            print task.info['output']
             result_obj = {'Status': "CELERY_FAILURE"}
 
     return jsonify(result_obj)
@@ -84,7 +81,8 @@ def jenkins_building():
     form = JenkinsExecForm()
     if form.validate_on_submit():
         job = form.job.data
-        result = job_build(job)
+        tag = form.tag.data
+        result = job_build(job_name=job, tag=tag)
         re = {'result': result['result'], 'build_number': result['number'], 'revisions': result['changeSet']['revisions']}
         return jsonify(re)
     else:
@@ -108,9 +106,57 @@ def svn_tags():
     if job_name:
         svn_url = job_get_svn(job_name)
         if svn_url['tag_dir']:
-            svn_tag = svn_tag_list(svn_url['tag_dir'], job_name)
+            svn_tag = svn_tag_list(url=svn_url['tag_dir'], tags_filter=svn_url['tags_filter'])
         else:
             svn_tag = {}
         return jsonify(svn_tag)
     else:
         return jsonify({})
+
+
+@deploy.route('/flower-list')
+@login_required
+def flower_list():
+    task_id = request.args.get('task_id')
+    if task_id:
+        tasks_api = Config.FLOWER_URL + 'api/task/info/' + task_id
+        request_url = urllib2.Request(tasks_api)
+        base64string = base64.encodestring('%s:%s' % (Config.FLOWER_USER, Config.FLOWER_PASSWORD)).replace('\n', '')
+        request_url.add_header("Authorization", "Basic %s" % base64string)
+        response = urllib2.urlopen(request_url)
+        data = str(response.read().decode('utf-8')).replace('\'', '"')
+        results = json.loads(data)
+        if results['name'] != 'app.celery_runner.do_long_running_task':
+            results = {}
+    else:
+        tasks_api = Config.FLOWER_URL + 'api/tasks'
+        request_url = urllib2.Request(tasks_api)
+        base64string = base64.encodestring('%s:%s' % (Config.FLOWER_USER, Config.FLOWER_PASSWORD)).replace('\n', '')
+        request_url.add_header("Authorization", "Basic %s" % base64string)
+        response = urllib2.urlopen(request_url)
+        data = response.read().decode('utf-8')
+        values = json.loads(data)
+        results = []
+        for key, value in values.iteritems():
+            if value['name'] != 'app.celery_runner.do_long_running_task':
+                continue
+            uuid = value['uuid']
+            args = value['args'][3:-2]
+            if value['result']:
+                result = json.loads(str(value['result']).replace('\'', '"'))
+            else:
+                result = ''
+            timestamp = datetime.fromtimestamp(value['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+            state = value['state']
+            results.append({
+                'uuid': uuid,
+                'args': args,
+                'result': result,
+                'timestamp': timestamp,
+                'state': state
+            })
+        # results = [{'args': value['args'][3:-2], 'result': json.loads(str(value['result']).replace('\'', '"')),
+        #            'timestamp': datetime.fromtimestamp(value['timestamp']).strftime('%Y-%m-%d %H:%M:%S'),
+        #            'state': value['state'], 'uuid': value['uuid']}
+        #           for key, value in values.iteritems() if value['name'] == 'app.celery_runner.do_long_running_task']
+    return jsonify(results)

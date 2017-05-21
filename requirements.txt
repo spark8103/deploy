@@ -9,3 +9,5 @@ gevent==1.2.1
 python-jenkins==0.4.14
 svn==0.3.44
 flower==0.9.1
+gunicorn==19.7.1
+supervisor==3.3.1

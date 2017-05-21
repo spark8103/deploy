@@ -42,14 +42,18 @@ def job_get_svn(job_name):
     server = jenkins.Jenkins(jenkins_url, username=jenkins_username, password=jenkins_password)
     job_config = server.get_job_config(job_name)
     root = ET.fromstring(job_config.encode('utf8'))
+    svn_url = root.find('scm/locations/hudson.scm.SubversionSCM_-ModuleLocation/remote')
+    if ET.iselement(svn_url):
+        svn_url = svn_url.text
     tag_dir = root.find('properties/hudson.model.ParametersDefinitionProperty/parameterDefinitions/' +
                         'hudson.scm.listtagsparameter.ListSubversionTagsParameterDefinition/tagsDir')
     if ET.iselement(tag_dir):
         tag_dir = tag_dir.text
-    svn_url = root.find('scm/locations/hudson.scm.SubversionSCM_-ModuleLocation/remote')
-    if ET.iselement(svn_url):
-        svn_url = svn_url.text
-    return {'tag_dir': tag_dir, 'svn_url':svn_url}
+    tags_filter = root.find('properties/hudson.model.ParametersDefinitionProperty/parameterDefinitions/' +
+                        'hudson.scm.listtagsparameter.ListSubversionTagsParameterDefinition/tagsFilter')
+    if ET.iselement(tags_filter):
+        tags_filter = tags_filter.text
+    return {'svn_url':svn_url, 'tag_dir': tag_dir, 'tags_filter': tags_filter}
 
 # from app.jenkins_ext import jobs_list_get, job_build
 
