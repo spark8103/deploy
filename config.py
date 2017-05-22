@@ -34,6 +34,13 @@ class Config:
     SVN_USER = "apprun"
     SVN_PASSWORD = "apprun"
 
+    # ansible configuration
+    ANSIBLE_INVENTORY_FILE = 'd://spark//git//deploy//scripts//inventory_prod'
+    ANSIBLE_COMMAND = '/usr/bin/ansible'
+    ANSIBLE_USER = 'apprun'
+    ANSIBLE_KEY = '/opt/soft_build/DEPLOY/inventory_dir/apprun'
+
+
     @staticmethod
     def init_app(app):
         pass

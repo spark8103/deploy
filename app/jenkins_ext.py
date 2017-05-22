@@ -1,3 +1,4 @@
+# coding: utf-8
 import jenkins, time
 from config import Config
 try:
@@ -13,7 +14,7 @@ jenkins_password = Config.JENKINS_TOKEN
 def jobs_list_get():
     server = jenkins.Jenkins(jenkins_url, username=jenkins_username, password=jenkins_password)
     jobs = server.get_all_jobs()
-    return [ i['fullname'] for i in jobs]
+    return [ i['fullname'] for i in jobs if(i['fullname'].find('bd-')==0)]
 
 
 def job_build(job_name):

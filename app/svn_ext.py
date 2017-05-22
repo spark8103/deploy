@@ -1,3 +1,4 @@
+# coding: utf-8
 import svn.remote
 from config import Config
 

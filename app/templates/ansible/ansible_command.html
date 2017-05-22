@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config['SITE_NAME'] }} - Ansible Command{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>Ansible Command</h2>
+</div>
+
+<div class="col-md-10">
+    <form id="ansible_command_add" action="{{ url_for('ansible.ansible_command_add') }}" class="form-inline" method="POST">
+        {{ add_deploy_form.csrf_token }}
+        <div class="form-group">
+            <label for="group">{{ add_deploy_form.group.label }}：</label>
+            {{ add_deploy_form.group(class="form-control") }}
+        </div>
+
+        <div class="form-group">
+            <label for="command">{{ add_deploy_form.command.label }}：</label>
+            {{ add_deploy_form.command(class="form-control") }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">submit</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    </form>
+</div>
+
+<div class="col-md-12">
+    <hr />
+</div>
+
+<div class="col-md-12">
+    <div class="panel panel-info">
+        <div class="panel-heading">Result</div>
+        <div class="panel-body">
+            <p id="result"></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+function start_deploy_task() {
+    var url = "{{ url_for('ansible.ansible_command_add') }}";
+    var csrf_token = $('#csrf_token').val();
+    var group = $('#group').val();
+    var command = $('#command').val();
+
+    // send ajax POST request to start background job
+    $.ajax({
+        type: 'POST',
+        data: {'csrf_token':csrf_token, 'group':group , 'command':command},
+        url: url,
+        success: function(data, status, request) {
+            if (data['r']==0){
+                status_url = data['Location'];
+                console.log("status_url: " + status_url);
+                update_progress(status_url);
+            }else{
+                alert(data['error']);
+                console.log(data['error']);
+            }
+        },
+        error: function() {
+            alert('Unexpected error');
+        }
+    });
+}
+
+function update_progress(status_url) {
+    // send GET request to status URL
+    $.getJSON(status_url, function(data) {
+        var group = $('#group').val();
+        var command = $('#command').val();
+
+        // update UI
+        $('#result').empty();
+        $('#result').append("<img src=\"/static/images/loading.gif\" /><span class=\"text-warning\"><strong>" + group + "</strong> is Execing...</sparn>");
+        console.log(data['Status']);
+        if (data['Status'] != 'PENDING' && data['Status'] != 'PROGRESS') {
+            html = "<p class=\"text-primary\">Group: <strong>" + group + "</strong></p>" +
+                "<p class=\"text-primary\">Command: <strong>" + command + "</strong></p>" +
+                "<p class=\"bg-primary text-warning\">Result: </p>";
+            //html = '';
+
+            if (data['Status'] == 'SUCCESS') {
+                // show result
+                $('#result').empty();
+                result = html + '<p class=\"text-primary\"><strong>Ansible is ' + data['Status'] + '</strong></p><p>' + data['Out'].replace(/\n/g, '<br />') + '</p>';
+                $('#result').append(result);
+            }else if(data['Status'] == 'CELERY_FAILURE'){
+                // something unexpected happened
+                $('#result').empty();
+                result = html + '<p class=\"text-primary\"><strong><strong>Ansible is ' + data['Status'] +  '.</strong></p>';
+                $('#result').append(result);
+            } else {
+                // something unexpected happened
+                $('#result').empty();
+                result = html + '<p class=\"text-primary\"><strong>Ansible is ' + data['Status'] +  '</strong></p><p>' +  data['Out'].replace(/\n/g, '<br />') + '</p>';
+                $('#result').append(result);
+            }
+        } else {
+            // rerun in 2 seconds
+            setTimeout(function() {
+                update_progress(status_url);
+            }, 2000);
+        }
+    });
+}
+
+$(function() {
+    $('#ansible_command_add').submit(function(event) {
+        start_deploy_task();
+        event.preventDefault();
+    });
+});
+</script>
+{% endblock %}

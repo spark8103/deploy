@@ -37,7 +37,17 @@
                         <li><a href="{{ url_for('deploy.deploy_module_history') }}">Deploy History</a></li>
                     </ul>
                 </li>
-                <li><a href="/ansible">Ansible</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        Ansible <b class="caret"></b>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ url_for('ansible.ansible_command') }}">Ansible Command</a></li>
+                        <li><a href="{{ url_for('ansible.ansible_command_history') }}">Ansible Command History</a></li>
+                    </ul>
+                </li>
+                <li><a href="http://10.205.59.16/bd-jenkins/" target="_blank">bd-jenkins</a></li>
+                <li><a href="http://10.205.59.16/bd-web-cmdb/" target="_blank">bd-cmdb</a></li>
                 {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">

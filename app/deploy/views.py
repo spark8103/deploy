@@ -28,9 +28,8 @@ def deploy_module_add():
         version = form.version.data
         deploy_dir = ','.join(request.form.getlist("deploy_dir[]"))
         exec_script = Config.DEPLOY_SCRIPT
-        # command = str.format("{0} -m {1} -d {2} -v {3}", exec_script, module, deploy_dir, version)
-        command = exec_script
-        task_result = celery_runner.do_long_running_task.apply_async([command],kwargs={'module': module})
+        command = str.format("{0} -m {1} -d {2} -v {3}", exec_script, module, deploy_dir, version)
+        task_result = celery_runner.do_long_running_task.apply_async([command])
         result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.deploy_module_status', task_id=task_result.id)}
     else:
         result = {'r': 1, 'error': form.errors}
@@ -86,7 +85,7 @@ def jenkins_building():
         re = {'result': result['result'], 'build_number': result['number'], 'revisions': result['changeSet']['revisions']}
         return jsonify(re)
     else:
-        return render_template('deploy/jenkins_building.html', form=form)
+        return render_template('deploy/ansible_command.html', form=form)
 
 
 @deploy.route('/jenkins-job-number')
@@ -143,7 +142,7 @@ def flower_list():
             uuid = value['uuid']
             args = value['args'][3:-2]
             if value['result']:
-                result = json.loads(str(value['result']).replace('\'', '"'))
+                result = json.loads(str(value['result']).replace('\'', '"').replace('\\n', '<br />'))
             else:
                 result = ''
             timestamp = datetime.fromtimestamp(value['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
@@ -151,6 +150,9 @@ def flower_list():
             results.append({
                 'uuid': uuid,
                 'args': args,
+                'name': args.split()[2],
+                'deploy_dir': args.split()[4],
+                'build_number': args.split()[6],
                 'result': result,
                 'timestamp': timestamp,
                 'state': state
