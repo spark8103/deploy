@@ -10,7 +10,8 @@ def svn_tag_list(url, tags_filter, username=svn_username, password=svn_password)
     svn_remote = svn.remote.RemoteClient(url, username=username, password=password)
     if tags_filter:
         tags_filter = tags_filter.replace('.*', '')
+        #tag_list = [i.replace('/', '') for i in svn_remote.list() if((not i.find(tags_filter)) or (i.find('subversionservers')))]
         tag_list = [i.replace('/', '') for i in svn_remote.list() if not i.find(tags_filter)]
     else:
-        tag_list = [i.replace('/', '') for i in svn_remote.list()]
+        tag_list = [i.replace('/', '') for i in svn_remote.list() if not i.find('bd-')]
     return sorted(tag_list, reverse=True)

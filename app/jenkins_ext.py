@@ -17,10 +17,10 @@ def jobs_list_get():
     return [ i['fullname'] for i in jobs if(i['fullname'].find('bd-')==0)]
 
 
-def job_build(job_name):
+def job_build(job_name, tag):
     server = jenkins.Jenkins(jenkins_url, username=jenkins_username, password=jenkins_password)
     next_bn = server.get_job_info(job_name)['nextBuildNumber']
-    server.build_job(job_name)
+    server.build_job(job_name, parameters={'SVN_TAG': tag})
 
     while 1:
         if server.get_job_info(job_name)['lastBuild']['number'] == next_bn and \

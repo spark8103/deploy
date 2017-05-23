@@ -4,7 +4,7 @@ from . import celery
 
 
 @celery.task(bind=True)
-def do_long_running_task(self, cmd, type='Command'):
+def deploy_running_task(self, cmd, type='Deploy'):
     has_error = False
     result = None
     output = ""
@@ -45,7 +45,7 @@ def do_long_running_task(self, cmd, type='Command'):
 
 
 @celery.task(bind=True)
-def ansible_running_task(self, cmd, type='ansible'):
+def ansible_running_task(self, cmd, type='Ansible'):
     has_error = False
     result = None
     output = ""

@@ -8,7 +8,7 @@ from ..jenkins_ext import job_get_number, job_build, job_get_svn
 from ..svn_ext import svn_tag_list
 from config import Config
 from .. import celery_runner
-import os, json, urllib2, base64
+import os, json, urllib2, base64, time
 from datetime import datetime
 
 
@@ -29,7 +29,8 @@ def deploy_module_add():
         deploy_dir = ','.join(request.form.getlist("deploy_dir[]"))
         exec_script = Config.DEPLOY_SCRIPT
         command = str.format("{0} -m {1} -d {2} -v {3}", exec_script, module, deploy_dir, version)
-        task_result = celery_runner.do_long_running_task.apply_async([command])
+        print "ansible_command - " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " : " + command
+        task_result = celery_runner.deploy_running_task.apply_async([command])
         result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.deploy_module_status', task_id=task_result.id)}
     else:
         result = {'r': 1, 'error': form.errors}
@@ -39,7 +40,7 @@ def deploy_module_add():
 @deploy.route('/deploy-module-status/<string:task_id>')
 @login_required
 def deploy_module_status(task_id):
-    task = celery_runner.do_long_running_task.AsyncResult(task_id)
+    task = celery_runner.deploy_running_task.AsyncResult(task_id)
     if task.state == 'PENDING':
         result = "Task not found"
         resp = make_response((result, 404))
@@ -125,7 +126,7 @@ def flower_list():
         response = urllib2.urlopen(request_url)
         data = str(response.read().decode('utf-8')).replace('\'', '"')
         results = json.loads(data)
-        if results['name'] != 'app.celery_runner.do_long_running_task':
+        if results['name'] != 'app.celery_runner.deploy_running_task':
             results = {}
     else:
         tasks_api = Config.FLOWER_URL + 'api/tasks'
@@ -137,12 +138,13 @@ def flower_list():
         values = json.loads(data)
         results = []
         for key, value in values.iteritems():
-            if value['name'] != 'app.celery_runner.do_long_running_task':
+            if value['name'] != 'app.celery_runner.deploy_running_task':
                 continue
             uuid = value['uuid']
             args = value['args'][3:-2]
             if value['result']:
-                result = json.loads(str(value['result']).replace('\'', '"').replace('\\n', '<br />'))
+                result = json.loads(str(value['result']).replace('\"', '^').replace('\'', '"').
+                                    replace('\\x1b', '').replace('\\n', '<br />'))
             else:
                 result = ''
             timestamp = datetime.fromtimestamp(value['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
@@ -160,5 +162,5 @@ def flower_list():
         # results = [{'args': value['args'][3:-2], 'result': json.loads(str(value['result']).replace('\'', '"')),
         #            'timestamp': datetime.fromtimestamp(value['timestamp']).strftime('%Y-%m-%d %H:%M:%S'),
         #            'state': value['state'], 'uuid': value['uuid']}
-        #           for key, value in values.iteritems() if value['name'] == 'app.celery_runner.do_long_running_task']
+        #           for key, value in values.iteritems() if value['name'] == 'app.celery_runner.deploy_running_task']
     return jsonify(results)

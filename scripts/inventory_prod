@@ -9,3 +9,6 @@ ym-prd-app-101 ansible_ssh_host=10.12.13.101
 [bj-test-redis]
 bj-test-redis-201 ansible_ssh_host=10.89.11.201
 bj-test-redis-202 ansible_ssh_host=10.89.11.202
+
+[test-server]
+test-201 ansible_ssh_host=172.31.217.201

@@ -36,9 +36,9 @@ class Config:
 
     # ansible configuration
     ANSIBLE_INVENTORY_FILE = 'd://spark//git//deploy//scripts//inventory_prod'
-    ANSIBLE_COMMAND = '/usr/bin/ansible'
+    ANSIBLE_COMMAND = 'ansible'
     ANSIBLE_USER = 'apprun'
-    ANSIBLE_KEY = '/opt/soft_build/DEPLOY/inventory_dir/apprun'
+    ANSIBLE_KEY = 'd://spark//git//deploy//ssh_keys//id-rsa'
 
 
     @staticmethod
