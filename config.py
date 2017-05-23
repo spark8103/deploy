@@ -9,7 +9,12 @@ class Config:
     SITE_NAME = "deploy"
     BASE_DIR = basedir
     BOOTSTRAP_SERVE_LOCAL = True
+
+    # Deploy configuration
     DEPLOY_SCRIPT = 'd://spark//git//deploy//scripts//test.py'
+    DEPLOY_INVENTORY_FILE = '/opt/soft_build/DEPLOY/inventory_dir/project'
+
+    # Flower configuration
     FLOWER_URL = 'http://127.0.0.1:5555/'
     FLOWER_USER = 'admin'
     FLOWER_PASSWORD = 'admin123'
