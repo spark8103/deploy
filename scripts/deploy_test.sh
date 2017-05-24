@@ -41,7 +41,7 @@ if [ ${version}xxx = ""xxx ]; then
 fi
 
 ###Get app_type##
-app_type=`/opt/soft_build/DEPLOY/inventory_dir/get_var.py ${module} app_type`
+app_type=`/opt/app/applications/bd-deploy/scripts/get_inventory_var.py ${module} app_type`
 if [ $? -ne 0 ]; then echo "Error: Get module ${module}'s app_type is fault! Please check ansible inventory."; exit 127; fi
 if [ -z $app_type ]; then echo "Error: Get module ${module}'s app_type is null! Please check ansible inventory."; exit 127; fi
 
@@ -64,40 +64,43 @@ echo ""
 
 function update_apps(){
   echo "##### update apps_dir for ${module} #####"
-  #ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m synchronize -a "src=${DEPLOY_DIR}/apps/ dest=/opt/app/applications/${module}/apps mode=push delete=yes checksum=yes"
-  #if [ $? -ne 0 ]; then echo "Error: Update apps_dir is fault!"; exit 127; fi
+  ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m synchronize -a "src=${DEPLOY_DIR}/apps/ dest=/opt/app/applications/${module}/apps mode=push delete=yes checksum=yes"
+  if [ $? -ne 0 ]; then echo "Error: Update apps_dir is fault!"; exit 127; fi
+  echo ""
 }
 
 function update_lib(){
   echo "##### update lib_dir for ${module} #####"
-  #ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m synchronize -a "src=${DEPLOY_DIR}/lib/ dest=/opt/app/applications/${module}/lib mode=push delete=yes checksum=yes"
-  #if [ $? -ne 0 ]; then echo "Error: Update lib_dir is fault!"; exit 127; fi
+  ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m synchronize -a "src=${DEPLOY_DIR}/lib/ dest=/opt/app/applications/${module}/lib mode=push delete=yes checksum=yes"
+  if [ $? -ne 0 ]; then echo "Error: Update lib_dir is fault!"; exit 127; fi
+  echo ""
 }
 
 function update_config(){
   echo "##### update config_dir for ${module} #####"
-  #ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m synchronize -a "src=${DEPLOY_DIR}/config/ dest=/opt/app/applications/${module}/config mode=push delete=yes checksum=yes"
-  #if [ $? -ne 0 ]; then echo "Error: Update config_dir is fault!"; exit 127; fi
+  ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m synchronize -a "src=${DEPLOY_DIR}/config/ dest=/opt/app/applications/${module}/config mode=push delete=yes checksum=yes"
+  if [ $? -ne 0 ]; then echo "Error: Update config_dir is fault!"; exit 127; fi
+  echo ""
 }
 
 
 function start_tomcat(){
   echo "###Start remote tomcat applications.##"
-  #ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "source /etc/profile && /opt/programs/tomcatctl/bin/tomcatctl ${module} start"
-  #if [ $? -ne 0 ]; then echo "Error: Start remote applications is fault!"; exit 127; fi
+  ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "source /etc/profile && /opt/programs/tomcatctl/bin/tomcatctl ${module} start"
+  if [ $? -ne 0 ]; then echo "Error: Start remote applications is fault!"; exit 127; fi
   echo ""
 }
 
 function stop_tomcat(){
   echo "###Stop remote tomcat applications.##"
-  #ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "source /etc/profile && /opt/programs/tomcatctl/bin/tomcatctl ${module} stop"
-  #if [ $? -ne 0 ]; then echo "Error: Stop remote applications is fault!"; exit 127; fi
+  ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "source /etc/profile && /opt/programs/tomcatctl/bin/tomcatctl ${module} stop"
+  if [ $? -ne 0 ]; then echo "Error: Stop remote applications is fault!"; exit 127; fi
   echo ""
 }
 
 function clean_tomcat_workspace(){
   echo "###Clean remote tomcat workspace.##"
-  #ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "/bin/rm -rf /opt/app/applications/${module}/work/*"
+  ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m file -a "path=/opt/app/applications/${module}/work/Catalina state=absent"
   #ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "/bin/rm -rf /opt/app/applications/${module}/work/Catalina/localhost/${module}/ && /bin/echo /opt/app/applications/${module}/work/Catalina/localhost/ && /bin/ls -al /opt/app/applications/${module}/work/Catalina/localhost/"
   if [ $? -ne 0 ]; then echo "Error: Clean workspace is fault!"; exit 127; fi
   echo ""
@@ -105,15 +108,15 @@ function clean_tomcat_workspace(){
 
 function start_jar(){
   echo "###Start remote jar applications.##"
-  #ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "source /etc/profile && /opt/app/applications/${module}/bin/${module}.sh start"
-  #if [ $? -ne 0 ]; then echo "Error: Start remote applications is fault!"; exit 127; fi
+  ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "source /etc/profile && /opt/app/applications/${module}/bin/${module}.sh start"
+  if [ $? -ne 0 ]; then echo "Error: Start remote applications is fault!"; exit 127; fi
   echo ""
 }
 
 function stop_jar(){
   echo "###Stop remote jar applications.##"
-  #ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "source /etc/profile && /opt/app/applications/${module}/bin/${module}.sh stop"
-  #if [ $? -ne 0 ]; then echo "Error: Stop remote applications is fault!"; exit 127; fi
+  ansible ${module} -u apprun -i ${inventory_prd} --private-key=${apprun_prd} -m shell -a "source /etc/profile && /opt/app/applications/${module}/bin/${module}.sh stop"
+  if [ $? -ne 0 ]; then echo "Error: Stop remote applications is fault!"; exit 127; fi
   echo ""
 }
 

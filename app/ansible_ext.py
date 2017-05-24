@@ -6,10 +6,8 @@ import os, json, urllib2
 ansible_inventory_file = Config.ANSIBLE_INVENTORY_FILE
 deploy_inventory_file = Config.DEPLOY_INVENTORY_FILE
 
-BASE_DIR = "/opt/app/applications/bd-deploy/scripts"
 preurl = 'http://10.11.11.22/api/v0.1/ci/s?q='
 header = {"Content-Type": "application/json"}
-inventory_file = os.path.join(BASE_DIR, 'inventory_prod')
 
 
 def get_inventory_group():
@@ -19,7 +17,7 @@ def get_inventory_group():
     return cf.sections()
 
 
-def get_ansible_vars(group, var_name):
+def get_inventory_vars(group, var_name):
     """ get group_var values """
     cf = ConfigParser.ConfigParser()
     cf.read(deploy_inventory_file)
@@ -29,6 +27,30 @@ def get_ansible_vars(group, var_name):
         result = cf.get(group, var_name)
     except:
         result = ""
+    return result
+
+
+def get_inventory_hosts(group):
+    """Get inventory hosts"""
+    cf = ConfigParser.ConfigParser()
+    cf.read(deploy_inventory_file)
+    try:
+        options = cf.options(group)
+    except:
+        return ""
+
+    result = ""
+    if len(options)==0:
+        return ""
+
+    for i in options:
+        try:
+            if len(result) == 0:
+                result = i.split()[0] + "@" + cf.get(group, i)
+            else:
+                result = result + ";" + i.split()[0] + "@" + cf.get(group, i)
+        except:
+            return ""
     return result
 
 
@@ -78,6 +100,6 @@ def update_inventory():
             inventory_info = inventory_info + i[0] + " ansible_ssh_host=" + i[1] + "\r\n"
         inventory_info = inventory_info + "\r\n"
     # write file
-    with open(inventory_file, 'w') as outfile:
+    with open(ansible_inventory_file, 'w') as outfile:
         outfile.write(inventory_info)
     return True

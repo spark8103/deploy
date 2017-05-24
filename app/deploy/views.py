@@ -6,6 +6,7 @@ from .. import flash_errors
 from .forms import AddDeployForm, JenkinsExecForm
 from ..jenkins_ext import job_get_number, job_build, job_get_svn
 from ..svn_ext import svn_tag_list
+from ..ansible_ext import get_inventory_hosts
 from config import Config
 from .. import celery_runner
 import os, json, urllib2, base64, time
@@ -94,9 +95,9 @@ def jenkins_building():
 def jenkins_job_number():
     job_name = request.args.get('job_name')
     if job_name:
-        return jsonify(job_get_number(job_name))
+        return jsonify({"job_number": job_get_number(job_name), "server_list": get_inventory_hosts(job_name)})
     else:
-        return jsonify({})
+        return jsonify({"job_number": '', "server_list": ''})
 
 
 @deploy.route('/svn-tags')

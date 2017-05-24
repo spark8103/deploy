@@ -48,11 +48,20 @@
                             lib
                         </label>
 
-                        <label class="checkbox-inline" for="config">
+                        <!-- <label class="checkbox-inline" for="config">
                             <input type="checkbox" name="deploy_dir" value="config">
                             config
-                        </label>
+                        </label> -->
                   </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6">
+            <div class="form-group">
+                <label class="control-label col-md-2" for="deploy_server">Deploy Server：</label>
+                <div id="deploy_server" class="col-md-4">
+                    <p class="text-primary">&nbsp;&nbsp;&nbsp;&nbsp;</p>
                 </div>
             </div>
         </div>
@@ -172,9 +181,11 @@ $(function() {
         var url = "{{ url_for('deploy.jenkins_job_number') }}?job_name=" + $('#module').val();
         $.get(url, function(result){
             $("#version").empty(); //clean select option
-            for(var item in result){
-                $("#version").append("<option value=" + result[item] + ">" + result[item] + "</option>");
+            for(var item in result['job_number']){
+                $("#version").append("<option value=" + result['job_number'][item] + ">" + result['job_number'][item] + "</option>");
             }
+            $('#deploy_server').empty(); //clean text
+            $('#deploy_server').append("<p class=\"text-primary\">" + result['server_list'] + "</p>");
         });
     });
 
