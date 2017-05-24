@@ -144,8 +144,8 @@ def flower_list():
             uuid = value['uuid']
             args = value['args'][3:-2]
             if value['result']:
-                result = json.loads(str(value['result']).replace('\"', '^').replace('\'', '"').
-                                    replace('\\x1b', '').replace('\\n', '<br />'))
+                result = json.loads(str(value['result']).replace('\\\'', '').replace('\"', '^').replace('\'', '"')
+                        .replace('\\x1b', '').replace('\\n', '<br />').replace('\\', ''))
             else:
                 result = ''
             timestamp = datetime.fromtimestamp(value['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
