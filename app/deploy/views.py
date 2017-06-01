@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from . import deploy
 from .. import flash_errors
 from .forms import AddDeployForm, JenkinsExecForm
-from ..jenkins_ext import job_get_number, job_build, job_get_svn
+from ..jenkins_ext import job_get_number, job_build, job_get_svn, get_job_build_status
 from ..svn_ext import svn_tag_list
 from ..ansible_ext import get_inventory_hosts
 from config import Config
@@ -76,18 +76,42 @@ def deploy_module_history():
     return render_template('deploy/deploy_history.html')
 
 
-@deploy.route('/jenkins-building', methods=['GET', 'POST'])
+@deploy.route('/jenkins-building')
 @login_required
 def jenkins_building():
     form = JenkinsExecForm()
+    return render_template('deploy/jenkins_building.html', form=form)
+
+
+@deploy.route('/jenkins-building-add', methods=['POST'])
+@login_required
+def jenkins_building_add():
+    form = JenkinsExecForm()
     if form.validate_on_submit():
-        job = form.job.data
+        job_name = form.job_name.data
         tag = form.tag.data
-        result = job_build(job_name=job, tag=tag)
-        re = {'result': result['result'], 'build_number': result['number'], 'revisions': result['changeSet']['revisions']}
-        return jsonify(re)
+        # building_number = job_build(job_name=job, tag=tag)
+        building_number = job_build(job_name=job_name)
+        status_url = url_for('.jenkins_building_status', job_name=job_name, build_number=building_number)
+        result = {'r': 0, 'job_name':job_name, 'tag':tag, 'building_number':building_number,
+                  'Location': status_url}
     else:
-        return render_template('deploy/ansible_command.html', form=form)
+        result = {'r': 1, 'error': form.errors}
+    return jsonify(result)
+
+
+@deploy.route('/jenkins-building-status')
+@login_required
+def jenkins_building_status():
+    job_name = request.args.get('job_name')
+    build_number = request.args.get('build_number')
+    if job_name is None and build_number is None:
+        return jsonify({"result": "ERROR",
+                        "build_number": 0,
+                        "out": "Please post job_name and build_number",
+                        'building': 'false'})
+    re = get_job_build_status(job_name, int(build_number))
+    return jsonify(re)
 
 
 @deploy.route('/jenkins-job-number')
@@ -145,7 +169,9 @@ def flower_list():
             args = value['args'][3:-2]
             if value['result']:
                 result = json.loads(str(value['result']).replace('\\\'', '').replace('\"', '^').replace('\'', '"')
-                        .replace('\\x1b', '').replace('\\n', '<br />').replace('\\', ''))
+                                    .replace('\\x1b', '').replace('\\n', '<br />').replace('\\', '')
+                                    .replace('[1;31;40m', '<font color=red>').replace('[1;32;40m', '<font color=green>')
+                                    .replace('[0m', '</font>'))
             else:
                 result = ''
             timestamp = datetime.fromtimestamp(value['timestamp']).strftime('%Y-%m-%d %H:%M:%S')

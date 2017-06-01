@@ -17,25 +17,52 @@ def jobs_list_get():
     return [ i['fullname'] for i in jobs if(i['fullname'].find('bd-')==0)]
 
 
-def job_build(job_name, tag):
+def job_build(job_name):
     server = jenkins.Jenkins(jenkins_url, username=jenkins_username, password=jenkins_password)
     next_bn = server.get_job_info(job_name)['nextBuildNumber']
-    server.build_job(job_name, parameters={'SVN_TAG': tag})
+    try:
+        server.build_job(job_name)
+    except:
+        return 0
+    return next_bn
 
-    while 1:
-        if server.get_job_info(job_name)['lastBuild']['number'] == next_bn and \
-                not server.get_build_info(job_name, next_bn)['building']:
-            break
-        else:
+
+def get_job_build_status(job_name, build_number):
+    server = jenkins.Jenkins(jenkins_url, username=jenkins_username, password=jenkins_password)
+    try:
+        next_bn = server.get_job_info(job_name)['nextBuildNumber']
+    except jenkins.NotFoundException:
+        return {"result": "ERROR",
+                "build_number": build_number,
+                "out": "Requested item could not be found"}
+
+    if build_number >= next_bn:
+        build_info = {"result": "PENDING",
+                      "build_number": build_number,
+                      "out": "BuildNumber is Error.",
+                      "building": "true"}
+    else:
+        try:
             time.sleep(5)
-    build_info = server.get_build_info(job_name, next_bn)
+            result = server.get_build_info(job_name, build_number)
+            build_info = {'result': result['result'],
+                          'build_number': result['number'],
+                          'revisions': result['changeSet']['revisions'],
+                          'building': result['building']}
+        except jenkins.NotFoundException:
+            build_info = {"result": "ERROR",
+                          "build_number": build_number,
+                          "out": "Requested item could not be found"}
     return build_info
 
 
 def job_get_number(job_name):
     server = jenkins.Jenkins(jenkins_url, username=jenkins_username, password=jenkins_password)
     job_info = server.get_job_info(job_name)
-    last_number = job_info['lastCompletedBuild']['number']
+    try:
+        last_number = job_info['lastCompletedBuild']['number']
+    except:
+        return 0
     return range((last_number - 4), (last_number + 1))[::-1]
 
 
@@ -66,4 +93,3 @@ def job_get_svn(job_name):
 # last_build_number = server.get_job_info(job_name)['lastBuild']['number']
 # last_completed_build_number = server.get_job_info(job_name)['lastCompletedBuild']['number']
 # build_info = server.get_build_info(job_name, last_build_number)
-

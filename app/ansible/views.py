@@ -6,7 +6,7 @@ from .forms import AddAnsibleForm
 from .. import flash_errors
 from config import Config
 from .. import celery_runner
-import os, json, urllib2, base64, time
+import os, json, urllib2, base64, time, re
 from datetime import datetime
 
 
@@ -23,10 +23,13 @@ def ansible_command_add():
     form = AddAnsibleForm(data=request.get_json())
     if form.validate_on_submit():
         group = form.group.data
+        user = form.user.data
         command = form.command.data
         exec_command = str.format("{0} {1} -u {2} -i {3} --private-key={4} -m shell -a \"{5}\"",
                              Config.ANSIBLE_COMMAND, group, Config.ANSIBLE_USER, Config.ANSIBLE_INVENTORY_FILE,
                              Config.ANSIBLE_KEY, command)
+        if user == "root":
+            exec_command = exec_command + " -b --become-user=root"
         print "ansible_command - " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " : " + exec_command
         task_result = celery_runner.ansible_running_task.apply_async([exec_command])
         result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.ansible_command_status', task_id=task_result.id)}
@@ -103,7 +106,14 @@ def flower_list():
             args = value['args'][3:-2]
             if value['result']:
                 result = json.loads(str(value['result']).replace('\\\'', '').replace('\"', '^').replace('\'', '"')
-                                    .replace('\\x1b', '').replace('\\n', '<br />').replace('\\', ''))
+                                    .replace('\\x1b', '').replace('\\n', '<br />').replace('\\', '')
+                                    .replace('[1;31;40m', '<font color=red>').replace('[1;32;40m', '<font color=green>')
+                                    .replace('[0m', '</font>'))
+                result = json.loads(
+                    re.sub(r" \'([a-zA-Z]+)\' ", r" \1 ", str(value['result'])).replace('\\\'', '').replace('\"', '^')
+                    .replace('\'', '"').replace('\\x1b', '').replace('\\n', '<br />').replace('\\', '')
+                    .replace('[1;31;40m', '<font color=red>').replace('[1;32;40m', '<font color=green>')
+                    .replace('[0m', '</font>'))
             else:
                 result = ''
             timestamp = datetime.fromtimestamp(value['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
@@ -118,3 +128,6 @@ def flower_list():
                 'state': state
             })
     return jsonify(results)
+
+Posturl = 'i_bu:大数据,category:(大数据;征信业务),env:生产,category_branch:(*-oracle;*-db*;*-vertica*;' \
+          '*-nosql*;*-hive*;*-oa;*-ogg*;*-redis*)&facet=category_branch'

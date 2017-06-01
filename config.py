@@ -22,10 +22,11 @@ class Config:
     # Celery configuration
     CELERY_BROKER_URL = 'redis://172.31.217.201:6379/0'
     CELERY_RESULT_BACKEND = 'redis://172.31.217.201:6379/0'
-    CELERY_TASK_SERIALIZER = 'json'
+    CELERY_TASK_SERIALIZER = 'msgpack'
     CELERY_RESULT_SERIALIZER = 'json'
-    CELERY_ACCEPT_CONTENT = ['json']
+    CELERY_ACCEPT_CONTENT = ['json', 'msgpack']
     CELERY_TIMEZONE = 'Asia/Shanghai'
+    CELERY_TASK_RESULT_EXPIRES = 60 * 60 * 24
     CELERY_ENABLE_UTC = True
     CELERYD_LOG_FILE = "logs/celery.log"
 

@@ -46,9 +46,9 @@ def get_inventory_hosts(group):
     for i in options:
         try:
             if len(result) == 0:
-                result = i.split()[0] + "@" + cf.get(group, i)
+                result = i.split()[0]
             else:
-                result = result + ";" + i.split()[0] + "@" + cf.get(group, i)
+                result = result + ";" + i.split()[0]
         except:
             return ""
     return result
