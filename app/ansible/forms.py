@@ -7,6 +7,7 @@ from ..ansible_ext import get_inventory_group
 
 class AddAnsibleForm(FlaskForm):
     group = SelectField('Group', coerce=str, validators=[DataRequired()])
+    host = StringField('Host', validators=[DataRequired()])
     user = SelectField('User', coerce=str, validators=[DataRequired()])
     command = StringField('Command', validators=[DataRequired()])
 

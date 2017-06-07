@@ -7,7 +7,7 @@
     <h2>Ansible Command</h2>
 </div>
 
-<div class="col-md-10">
+<div class="col-md-12">
     <form id="ansible_command_add" action="{{ url_for('ansible.ansible_command_add') }}" class="form-inline" method="POST">
         {{ add_deploy_form.csrf_token }}
         <div class="form-group">
@@ -16,7 +16,14 @@
         </div>
 
         <div class="form-group">
-            <label for="group">{{ add_deploy_form.user.label }}：</label>
+            <label for="host">{{ add_deploy_form.host.label }}：</label>
+            <select class="form-control" id="host" name="host">
+                <option value="0">Choose...</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="user">{{ add_deploy_form.user.label }}：</label>
             {{ add_deploy_form.user(class="form-control") }}
         </div>
 
@@ -51,13 +58,14 @@ function start_deploy_task() {
     var url = "{{ url_for('ansible.ansible_command_add') }}";
     var csrf_token = $('#csrf_token').val();
     var group = $('#group').val();
+    var host = $('#host').val();
     var user = $('#user').val();
     var command = $('#command').val();
 
     // send ajax POST request to start background job
     $.ajax({
         type: 'POST',
-        data: {'csrf_token':csrf_token, 'group':group, 'user': user, 'command':command},
+        data: {'csrf_token':csrf_token, 'group':group, 'host':host, 'user': user, 'command':command},
         url: url,
         success: function(data, status, request) {
             if (data['r']==0){
@@ -79,6 +87,7 @@ function update_progress(status_url) {
     // send GET request to status URL
     $.getJSON(status_url, function(data) {
         var group = $('#group').val();
+        var host = $('#host').val();
         var command = $('#command').val();
 
         // update UI
@@ -87,6 +96,7 @@ function update_progress(status_url) {
         console.log(data['Status']);
         if (data['Status'] != 'PENDING' && data['Status'] != 'PROGRESS') {
             html = "<p class=\"text-primary\">Group: <strong>" + group + "</strong></p>" +
+                "<p class=\"text-primary\">Host: <strong>" + host + "</strong></p>" +
                 "<p class=\"text-primary\">Command: <strong>" + command + "</strong></p>" +
                 "<p class=\"bg-primary text-warning\">Result: </p>";
             //html = '';
@@ -117,6 +127,22 @@ function update_progress(status_url) {
 }
 
 $(function() {
+    $('#group').change(function() {
+        if($('#group').val() == 0){
+            $("#host").empty();
+            $("#host").append("<option value=\"0\">Choose...</option>");
+            return false;
+        }
+        var url = "{{ url_for('ansible.get_hosts') }}?group=" + $('#group').val();
+        $.get(url, function(result){
+            $("#host").empty(); //clean select option
+            $("#host").append("<option value=all>all</option>");
+            for(var item in result){
+                $("#host").append("<option value=" + result[item] + ">" + result[item] + "</option>");
+            }
+        });
+    });
+
     $('#ansible_command_add').submit(function(event) {
         start_deploy_task();
         event.preventDefault();

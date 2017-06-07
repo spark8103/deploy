@@ -7,6 +7,7 @@ from .. import flash_errors
 from config import Config
 from .. import celery_runner
 import os, json, urllib2, base64, time, re
+from ..ansible_ext import get_ansible_inventory_hosts
 from datetime import datetime
 
 
@@ -23,11 +24,17 @@ def ansible_command_add():
     form = AddAnsibleForm(data=request.get_json())
     if form.validate_on_submit():
         group = form.group.data
+        host = form.host.data
         user = form.user.data
         command = form.command.data
-        exec_command = str.format("{0} {1} -u {2} -i {3} --private-key={4} -m shell -a \"{5}\"",
-                             Config.ANSIBLE_COMMAND, group, Config.ANSIBLE_USER, Config.ANSIBLE_INVENTORY_FILE,
-                             Config.ANSIBLE_KEY, command)
+        if host == "all":
+            exec_command = str.format("{0} {1} -u {2} -i {3} --private-key={4} -m shell -a \"{5}\"",
+                                 Config.ANSIBLE_COMMAND, group, Config.ANSIBLE_USER, Config.ANSIBLE_INVENTORY_FILE,
+                                 Config.ANSIBLE_KEY, command)
+        else:
+            exec_command = str.format("{0} {1} -u {2} -i {3} --private-key={4} -m shell -a \"{5}\"",
+                                      Config.ANSIBLE_COMMAND, host, Config.ANSIBLE_USER, Config.ANSIBLE_INVENTORY_FILE,
+                                      Config.ANSIBLE_KEY, command)
         if user == "root":
             exec_command = exec_command + " -b --become-user=root"
         print "ansible_command - " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " : " + exec_command
@@ -74,6 +81,17 @@ def ansible_command_status(task_id):
 @login_required
 def ansible_command_history():
     return render_template('ansible/ansible_command_history.html')
+
+
+@ansible.route('/get-hosts')
+@login_required
+def get_hosts():
+    group = request.args.get('group')
+    if group:
+        hosts = get_ansible_inventory_hosts(group)
+        return jsonify(hosts)
+    else:
+        return jsonify({})
 
 
 @ansible.route('/flower-list')

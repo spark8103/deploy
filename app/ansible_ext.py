@@ -54,6 +54,27 @@ def get_inventory_hosts(group):
     return result
 
 
+def get_ansible_inventory_hosts(group):
+    """Get inventory hosts"""
+    cf = ConfigParser.ConfigParser()
+    cf.read(ansible_inventory_file)
+    try:
+        options = cf.options(group)
+    except:
+        return ""
+
+    result = []
+    if len(options)==0:
+        return ""
+
+    for i in options:
+        try:
+            result.append(i.split()[0])
+        except:
+            return []
+    return result
+
+
 def get_all_pro():
     """ get cmdb branchs """
     branchs = []
