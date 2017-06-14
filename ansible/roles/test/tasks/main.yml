@@ -1,0 +1,4 @@
+- name: msg for ml-prd-db
+  debug: msg="{{ item }} dfffff  {{ groups['ml-prd-db'] }}"
+  with_items:
+    - "{{ groups['ml-prd-db'] }}"

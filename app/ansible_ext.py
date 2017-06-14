@@ -124,3 +124,7 @@ def update_inventory():
     with open(ansible_inventory_file, 'w') as outfile:
         outfile.write(inventory_info)
     return True
+
+
+def get_playbook_list():
+    return [ file for file in os.listdir(Config.ANSIBLE_PATH) if os.path.splitext(file)[1] == '.yml']

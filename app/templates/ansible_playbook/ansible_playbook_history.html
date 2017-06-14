@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ config['SITE_NAME'] }} - Ansible Command History{% endblock %}
+{% block title %}{{ config['SITE_NAME'] }} - Ansible Playbook History{% endblock %}
 
 {% block head %}
 {{ super() }}
@@ -9,12 +9,12 @@
 
 {% block page_content %}
 <div class="page-header">
-    <h2>Ansible Command History</h2>
+    <h2>Ansible Playbook History</h2>
 </div>
 
 <table id="ListTable"
        data-toggle="table"
-       data-url="{{ url_for('ansible.flower_list') }}"
+       data-url="{{ url_for('.flower_list') }}"
        data-method	="get"
        data-query-params=""
        data-pagination="true"
@@ -35,7 +35,7 @@
         <tr>
             <th data-field="uuid" data-sortable="false" data-switchable="false" data-visible="false">UUID</th>
             <th data-field="group" data-sortable="true">group</th>
-            <th data-field="command" data-sortable="false">command</th>
+            <th data-field="playbook" data-sortable="false">playbook</th>
             <th data-field="timestamp" data-sortable="true">Time</th>
             <th data-field="state" data-sortable="false" data-visible="false">State</th>
             <th data-field="result.output" data-sortable="true">Result</th>

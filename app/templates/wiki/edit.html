@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config['SITE_NAME'] }} - Wiki Edit{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Edit - {{ title }}</h1>
+</div>
+
+<div class="col-md-10">
+    <form method="POST">
+        {{ form.hidden_tag() }}
+         <div class="form-group">
+            <label for="body">Enter your markdown</label>
+            {{ form.body(only_input=True, rows=10, cols=200, class="form-control") }}
+         </div>
+        <div class="form-group">
+            <button type="submit" id="submit" class="btn btn-primary">submit</button>
+        </div>
+
+        <hr />
+
+        <div class="form-group">
+            <label for="body">preview</label>
+            {{ form.body(only_preview=True, cols=200, class="form-control") }}
+         </div>
+        <div class="form-group">
+            <a href="{{ view_url }}" id="view" class="btn btn-success btn-sm pull-left" role="button">view</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ pagedown.include_pagedown() }}
+<script>
+$(function() {
+    $('#view').click(function () {
+        if(confirm("Are you sure and you submit?")){
+            return true;
+        }else{
+        return false;
+        };
+    })
+});
+</script>
+{% endblock %}

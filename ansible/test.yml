@@ -1,0 +1,21 @@
+---
+
+- name: Test play
+  become: yes
+  become_method: sudo
+  become_user: root
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Debug task
+      debug:
+        msg: Hello world!
+
+    - name: user id
+      shell: id > /tmp/id
+
+  roles:
+    - test
+
+#  roles:
+#    - { role: test, dir: '/opt/app/applications/bd-deploy/ansible' }

@@ -1,8 +1,8 @@
 # coding: utf-8
 from flask import render_template, redirect, request, url_for, flash, jsonify, make_response
 from flask_login import login_required, current_user
-from . import ansible
-from .forms import AddAnsibleForm
+from . import ansibleplaybook
+from .forms import AddAnsiblePlaybookForm
 from .. import flash_errors
 from config import Config
 from .. import celery_runner
@@ -11,44 +11,39 @@ from ..ansible_ext import get_ansible_inventory_hosts
 from datetime import datetime
 
 
-@ansible.route('/ansible-command')
+@ansibleplaybook.route('/ansible-playbook')
 @login_required
-def ansible_command():
-    add_deploy_form = AddAnsibleForm()
-    return render_template('ansible/ansible_command.html', add_deploy_form=add_deploy_form)
+def ansible_playbook():
+    add_deploy_form = AddAnsiblePlaybookForm()
+    return render_template('ansible_playbook/ansible_playbook.html', add_deploy_form=add_deploy_form)
 
 
-@ansible.route('/ansible-command-add', methods=['POST'])
+@ansibleplaybook.route('/ansible-playbook-add', methods=['POST'])
 @login_required
-def ansible_command_add():
-    form = AddAnsibleForm(data=request.get_json())
+def ansible_playbook_add():
+    form = AddAnsiblePlaybookForm(data=request.get_json())
     if form.validate_on_submit():
         group = form.group.data
         host = form.host.data
-        user = form.user.data
-        command = form.command.data
+        playbook = os.path.join(Config.ANSIBLE_PATH, form.playbook.data)
         if host == "all":
-            exec_command = str.format("{0} {1} -u {2} -i {3} --private-key={4} -m shell -a \"{5}\"",
-                                 Config.ANSIBLE_COMMAND, group, Config.ANSIBLE_USER, Config.ANSIBLE_INVENTORY_FILE,
-                                 Config.ANSIBLE_KEY, command)
+            exec_command = str.format("{0} -i {1} --private-key={2} {3} -l {4}", "ansible-playbook",
+                                      Config.ANSIBLE_INVENTORY_FILE, Config.ANSIBLE_KEY, playbook, group)
         else:
-            exec_command = str.format("{0} {1} -u {2} -i {3} --private-key={4} -m shell -a \"{5}\"",
-                                      Config.ANSIBLE_COMMAND, host, Config.ANSIBLE_USER, Config.ANSIBLE_INVENTORY_FILE,
-                                      Config.ANSIBLE_KEY, command)
-        if user == "root":
-            exec_command = exec_command + " -b --become-user=root"
-        print "ansible_command - " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " : " + exec_command
-        task_result = celery_runner.ansible_running_task.apply_async([exec_command])
-        result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.ansible_command_status', task_id=task_result.id)}
+            exec_command = str.format("{0} -i {1} --private-key={2} {3} -l {4}", "ansible-playbook",
+                                      Config.ANSIBLE_INVENTORY_FILE, Config.ANSIBLE_KEY, playbook, host)
+        print "ansible_playbook - " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " : " + exec_command
+        task_result = celery_runner.ansible_playbook_task.apply_async([exec_command])
+        result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.ansible_playbook_status', task_id=task_result.id)}
     else:
         result = {'r': 1, 'error': form.errors}
     return jsonify(result)
 
 
-@ansible.route('/ansible-command-status/<string:task_id>')
+@ansibleplaybook.route('/ansible-playbook-status/<string:task_id>')
 @login_required
-def ansible_command_status(task_id):
-    task = celery_runner.ansible_running_task.AsyncResult(task_id)
+def ansible_playbook_status(task_id):
+    task = celery_runner.ansible_playbook_task.AsyncResult(task_id)
     if task.state == 'PENDING':
         result = "Task not found"
         resp = make_response((result, 404))
@@ -77,13 +72,13 @@ def ansible_command_status(task_id):
     return jsonify(result_obj)
 
 
-@ansible.route('/ansible-command-history')
+@ansibleplaybook.route('/ansible-playbook-history')
 @login_required
-def ansible_command_history():
-    return render_template('ansible/ansible_command_history.html')
+def ansible_playbook_history():
+    return render_template('ansible_playbook/ansible_playbook_history.html')
 
 
-@ansible.route('/get-hosts')
+@ansibleplaybook.route('/get-hosts')
 @login_required
 def get_hosts():
     group = request.args.get('group')
@@ -94,7 +89,7 @@ def get_hosts():
         return jsonify({})
 
 
-@ansible.route('/flower-list')
+@ansibleplaybook.route('/flower-list')
 @login_required
 def flower_list():
     task_id = request.args.get('task_id')
@@ -106,7 +101,7 @@ def flower_list():
         response = urllib2.urlopen(request_url)
         data = str(response.read().decode('utf-8')).replace('\'', '"')
         results = json.loads(data)
-        if results['name'] != 'app.celery_runner.ansible_running_task':
+        if results['name'] != 'app.celery_runner.ansible_playbook_task':
             results = {}
     else:
         tasks_api = Config.FLOWER_URL + 'api/tasks'
@@ -118,7 +113,7 @@ def flower_list():
         values = json.loads(data)
         results = []
         for key, value in values.iteritems():
-            if value['name'] != 'app.celery_runner.ansible_running_task':
+            if value['name'] != 'app.celery_runner.ansible_playbook_task':
                 continue
             uuid = value['uuid']
             args = value['args'][3:-2]
@@ -139,8 +134,8 @@ def flower_list():
             results.append({
                 'uuid': uuid,
                 'args': args,
-                'group': args.split()[1],
-                'command': args.split()[-1],
+                'group': args.split()[-1],
+                'playbook': args.split()[-3],
                 'result': result,
                 'timestamp': timestamp,
                 'state': state

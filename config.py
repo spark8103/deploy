@@ -45,6 +45,7 @@ class Config:
     ANSIBLE_COMMAND = 'ansible'
     ANSIBLE_USER = 'apprun'
     ANSIBLE_KEY = 'd://spark//git//deploy//ssh_keys//id-rsa'
+    ANSIBLE_PATH = 'd://spark//git//deploy//ansible//'
 
 
     @staticmethod

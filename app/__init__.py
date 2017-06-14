@@ -2,11 +2,13 @@
 from flask import Flask, flash
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
+from flask_pagedown import PageDown
 from config import config, Config
 from celery import Celery
 
 
 bootstrap = Bootstrap()
+pagedown = PageDown()
 celery = Celery(__name__, broker=Config.CELERY_BROKER_URL)
 
 login_manager = LoginManager()
@@ -31,6 +33,7 @@ def create_app(config_name):
     config[config_name].init_app(app)
 
     bootstrap.init_app(app)
+    pagedown.init_app(app)
     login_manager.init_app(app)
     celery.conf.update(app.config)
 
@@ -45,5 +48,11 @@ def create_app(config_name):
 
     from .ansible import ansible as ansible_blueprint
     app.register_blueprint(ansible_blueprint, url_prefix='/ansible')
+
+    from .ansible_playbook import ansibleplaybook as ansibleplaybook_blueprint
+    app.register_blueprint(ansibleplaybook_blueprint, url_prefix='/ansible-playbook')
+
+    from .wiki import wiki as wiki_blueprint
+    app.register_blueprint(wiki_blueprint, url_prefix='/wiki')
 
     return app

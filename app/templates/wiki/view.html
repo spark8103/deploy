@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config['SITE_NAME'] }} - Wiki{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid">
+    <div class="panel panel-success">
+        <div class="panel-heading">{{ title }} <a href="{{ edit_url }}" class="btn btn-success btn-sm pull-right" role="button">Edit</a></div>
+        <div class="panel-body">
+            {{ content }}
+        </div>
+    </div>
+</div>
+{% endblock %}
