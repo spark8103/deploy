@@ -26,12 +26,13 @@ def ansible_playbook_add():
         group = form.group.data
         host = form.host.data
         playbook = os.path.join(Config.ANSIBLE_PATH, form.playbook.data)
+        extra_var = form.extra_var.data
         if host == "all":
-            exec_command = str.format("{0} -i {1} --private-key={2} {3} -l {4}", "ansible-playbook",
-                                      Config.ANSIBLE_INVENTORY_FILE, Config.ANSIBLE_KEY, playbook, group)
+            exec_command = str.format("{0} -i {1} --private-key={2} -e {3} {4} -l {5}", "ansible-playbook",
+                                      Config.ANSIBLE_INVENTORY_FILE, Config.ANSIBLE_KEY, extra_var, playbook, group)
         else:
-            exec_command = str.format("{0} -i {1} --private-key={2} {3} -l {4}", "ansible-playbook",
-                                      Config.ANSIBLE_INVENTORY_FILE, Config.ANSIBLE_KEY, playbook, host)
+            exec_command = str.format("{0} -i {1} --private-key={2} -e {3} {4} -l {5}", "ansible-playbook",
+                                      Config.ANSIBLE_INVENTORY_FILE, Config.ANSIBLE_KEY, extra_var, playbook, host)
         print "ansible_playbook - " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " : " + exec_command
         task_result = celery_runner.ansible_playbook_task.apply_async([exec_command])
         result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.ansible_playbook_status', task_id=task_result.id)}

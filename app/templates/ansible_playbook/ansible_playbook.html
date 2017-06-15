@@ -27,6 +27,11 @@
             {{ add_deploy_form.playbook(class="form-control") }}
         </div>
 
+        <div class="form-group">
+            <label for="extra_var">{{ add_deploy_form.extra_var.label }}：</label>
+            {{ add_deploy_form.extra_var(class="form-control",size="50") }}
+        </div>
+
         <button type="submit" class="btn btn-primary">submit</button>
     </form>
 </div>
@@ -55,11 +60,12 @@ function start_deploy_task() {
     var group = $('#group').val();
     var host = $('#host').val();
     var playbook = $('#playbook').val();
+    var extra_var = $('#extra_var').val();
 
     // send ajax POST request to start background job
     $.ajax({
         type: 'POST',
-        data: {'csrf_token':csrf_token, 'group':group, 'host':host, 'playbook':playbook},
+        data: {'csrf_token':csrf_token, 'group':group, 'host':host, 'playbook':playbook, 'extra_var':extra_var},
         url: url,
         success: function(data, status, request) {
             if (data['r']==0){

@@ -9,6 +9,7 @@ class AddAnsiblePlaybookForm(FlaskForm):
     group = SelectField('Group', coerce=str, validators=[DataRequired()])
     host = StringField('Host', validators=[DataRequired()])
     playbook = SelectField('Playbook', coerce=str, validators=[DataRequired()])
+    extra_var = StringField('Vars')
 
     def __init__(self, *args, **kwargs):
         super(AddAnsiblePlaybookForm, self).__init__(*args, **kwargs)
