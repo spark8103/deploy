@@ -36,6 +36,7 @@ def create_app(config_name):
     pagedown.init_app(app)
     login_manager.init_app(app)
     celery.conf.update(app.config)
+    celery.config_from_object(app.config)
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)

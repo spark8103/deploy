@@ -124,3 +124,14 @@ def ansible_playbook_task(self, cmd, type='Ansible-Playbook'):
                 'description': str.format("Celery ran the task, but {0} reported error", type)
                 }
     return meta
+
+
+@celery.task(name='celery_tasks.cmd')
+def schedule_cmd(cmd):
+    child = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=subprocess.STDOUT, shell=True)
+    out, err = child.communicate()
+    ret = child.wait()
+    return {'returncode': ret,
+            'output': out,
+            'error:': err
+           }

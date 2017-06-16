@@ -1,5 +1,6 @@
 # coding: utf-8
 import os
+from datetime import timedelta
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -29,6 +30,14 @@ class Config:
     CELERY_TASK_RESULT_EXPIRES = 60 * 60 * 24
     CELERY_ENABLE_UTC = True
     CELERYD_LOG_FILE = "logs/celery.log"
+
+    CELERYBEAT_SCHEDULE = {
+        'update_inventory_prod-600-seconds': {
+            'task': 'celery_tasks.cmd',
+            'args': ['/opt/app/applications/bd-deploy/scripts/update_inventory_prod.py'],
+            'schedule': timedelta(seconds=600)
+        },
+    }
 
     # Jenkins configuration
     JENKINS_URL = 'http://172.31.217.62:8080/'
