@@ -20,4 +20,4 @@
 #  roles:
 #    - { role: test, dir: '/opt/app/applications/bd-deploy/ansible' }
 
-#VAR:
+#VAR:ss= bb=

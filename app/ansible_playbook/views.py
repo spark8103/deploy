@@ -2,12 +2,12 @@
 from flask import render_template, redirect, request, url_for, flash, jsonify, make_response
 from flask_login import login_required, current_user
 from . import ansibleplaybook
-from .forms import AddAnsiblePlaybookForm
+from .forms import AddAnsiblePlaybookForm, AddOsInitForm
 from .. import flash_errors
 from config import Config
 from .. import celery_runner
 import os, json, urllib2, base64, time, re
-from ..ansible_ext import get_ansible_inventory_hosts
+from ..ansible_ext import get_ansible_inventory_hosts, update_inventory_temp, get_ansible_playbook_vars
 from datetime import datetime
 
 
@@ -142,3 +142,41 @@ def flower_list():
                 'state': state
             })
     return jsonify(results)
+
+
+@ansibleplaybook.route('/os-init')
+@login_required
+def os_init():
+    add_os_init_form = AddOsInitForm()
+    return render_template('ansible_playbook/os_init.html', add_os_init_form=add_os_init_form)
+
+
+@ansibleplaybook.route('/os-init-add', methods=['POST'])
+@login_required
+def os_init_add():
+    form = AddOsInitForm(data=request.get_json())
+    if form.validate_on_submit():
+        hostlist = form.hostlist.data.split()
+        host_list = [i.split(',')[0] for i in hostlist]
+        ip_list = [ i.split(',')[-1] for i in hostlist ]
+        update_inventory_temp(hostlist)
+        playbook = os.path.join(Config.ANSIBLE_PATH, "S_os_init.yml")
+        exec_command = str.format("{0} -i {1} --private-key={2} -e {3} {4} -l {5}", "ansible-playbook",
+                                  Config.ANSIBLE_TEMP_INVENTORY_FILE, Config.ANSIBLE_KEY, ip_list, playbook, ":".join(host_list))
+        print "ansible_playbook - " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " : " + exec_command
+        task_result = celery_runner.ansible_playbook_task.apply_async([exec_command])
+        result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.ansible_playbook_status', task_id=task_result.id)}
+    else:
+        result = {'r': 1, 'error': form.errors}
+    return jsonify(result)
+
+
+@ansibleplaybook.route('/get-playbook-vars')
+@login_required
+def get_playbook_vars():
+    playbook = request.args.get('playbook')
+    if playbook:
+        result = get_ansible_playbook_vars(playbook)
+        return jsonify(result)
+    else:
+        return jsonify({})

@@ -11,25 +11,25 @@
     <form id="ansible_playbook_add" action="{{ url_for('.ansible_playbook_add') }}" class="form-inline" method="POST">
         {{ add_deploy_form.csrf_token }}
         <div class="form-group">
-            <label for="group">{{ add_deploy_form.group.label }}：</label>
+            {{ add_deploy_form.group.label }}
             {{ add_deploy_form.group(class="form-control") }}
         </div>
 
         <div class="form-group">
-            <label for="host">{{ add_deploy_form.host.label }}：</label>
+            {{ add_deploy_form.host.label }}
             <select class="form-control" id="host" name="host">
                 <option value="0">Choose...</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label for="playbook">{{ add_deploy_form.playbook.label }}：</label>
+            {{ add_deploy_form.playbook.label }}
             {{ add_deploy_form.playbook(class="form-control") }}
         </div>
 
         <div class="form-group">
-            <label for="extra_var">{{ add_deploy_form.extra_var.label }}：</label>
-            {{ add_deploy_form.extra_var(class="form-control",size="50") }}
+            {{ add_deploy_form.extra_var.label(id="label_extra_var", style="display: none;") }}
+            {{ add_deploy_form.extra_var(class="form-control", style="display: none;",size="50") }}
         </div>
 
         <button type="submit" class="btn btn-primary">submit</button>
@@ -140,6 +140,30 @@ $(function() {
             for(var item in result){
                 $("#host").append("<option value=" + result[item] + ">" + result[item] + "</option>");
             }
+        });
+    });
+
+    $('#playbook').change(function() {
+        if($('#playbook').val() == 0){
+            $("#extra_var").empty();
+            $("#label_extra_var").hide();
+            $("#extra_var").hide();
+            return false;
+        }
+        var url = "{{ url_for('.get_playbook_vars') }}?playbook=" + $('#playbook').val();
+        $.get(url, function(result){
+            if(result != null && result.split(":")[1] != '' ) {
+                var vars = result.split(":")[1];
+                //alert(vars);
+                $("#extra_var").empty(); //clean select option
+                $("#extra_var").val(vars);
+                $("#label_extra_var").show();
+                $("#extra_var").show();
+            }else{
+                $("#extra_var").empty();
+                $("#label_extra_var").hide();
+                $("#extra_var").hide();
+            };
         });
     });
 

@@ -6,12 +6,16 @@ from ..ansible_ext import get_inventory_group, get_playbook_list
 
 
 class AddAnsiblePlaybookForm(FlaskForm):
-    group = SelectField('Group', coerce=str, validators=[DataRequired()])
-    host = StringField('Host', validators=[DataRequired()])
-    playbook = SelectField('Playbook', coerce=str, validators=[DataRequired()])
-    extra_var = StringField('Vars')
+    group = SelectField('Group: ', coerce=str, validators=[DataRequired()])
+    host = StringField('Host: ', validators=[DataRequired()])
+    playbook = SelectField('Playbook: ', coerce=str, validators=[DataRequired()])
+    extra_var = StringField('Vars: ')
 
     def __init__(self, *args, **kwargs):
         super(AddAnsiblePlaybookForm, self).__init__(*args, **kwargs)
         self.group.choices = [(0, 'Choose...')] + [(i, i) for i in get_inventory_group() if i != "all:vars" ] + [('all', 'all')]
-        self.playbook.choices = [(i, i) for i in get_playbook_list()]
+        self.playbook.choices = [(0, 'Choose...')] + [(i, i) for i in get_playbook_list()]
+
+
+class AddOsInitForm(FlaskForm):
+    hostlist = TextAreaField('HostList', validators=[InputRequired()])

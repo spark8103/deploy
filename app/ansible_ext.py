@@ -1,7 +1,7 @@
 # coding: utf-8
 import ConfigParser
 from config import Config
-import os, json, urllib2
+import os, json, urllib2, re
 
 ansible_inventory_file = Config.ANSIBLE_INVENTORY_FILE
 deploy_inventory_file = Config.DEPLOY_INVENTORY_FILE
@@ -128,3 +128,24 @@ def update_inventory():
 
 def get_playbook_list():
     return [ file for file in os.listdir(Config.ANSIBLE_PATH) if os.path.splitext(file)[1] == '.yml']
+
+
+def update_inventory_temp(hostlist):
+    inventory_info = "[all:vars]\r\nansible_sudo_pass=xBm1x^e$FgnOkVbj\r\nansible_connection=ssh\r\nansible_user=apprun\r\n\r\n"
+    for i in hostlist:
+        inventory_info = inventory_info + i.split(",")[0] + " ansible_ssh_host=" + i[-1] + "\r\n"
+    with open(Config.ANSIBLE_TEMP_INVENTORY_FILE, 'w') as outfile:
+        outfile.write(inventory_info)
+    return True
+
+
+def get_ansible_playbook_vars(playbook):
+    """Get playbook vars"""
+    pattern = re.compile("^#VAR:.*")
+    playbook_file = os.path.join(Config.ANSIBLE_PATH, playbook)
+    if os.path.isfile(playbook_file):
+        for i, line in enumerate(open(playbook_file)):
+            for match in re.finditer(pattern, line):
+                return match.group()
+    else:
+        return None
