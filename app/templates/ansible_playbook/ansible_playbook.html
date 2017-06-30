@@ -91,6 +91,7 @@ function update_progress(status_url) {
         var playbook = $('#playbook').val();
 
         // update UI
+        $(':input[type="submit"]').prop('disabled', true);
         $('#result').empty();
         $('#result').append("<img src=\"/static/images/loading.gif\" /><span class=\"text-warning\"><strong>" + group + "</strong> is Execing...</sparn>");
         console.log(data['Status']);
@@ -106,16 +107,19 @@ function update_progress(status_url) {
                 $('#result').empty();
                 result = html + '<p class=\"text-primary\"><strong>Ansible-Playbook is ' + data['Status'] + '</strong></p><p>' + data['Out'].replace(/\n/g, '<br />') + '</p>';
                 $('#result').append(result);
+                $(':input[type="submit"]').prop('disabled', false);
             }else if(data['Status'] == 'CELERY_FAILURE'){
                 // something unexpected happened
                 $('#result').empty();
                 result = html + '<p class=\"text-primary\"><strong><strong>Ansible-Playbook is ' + data['Status'] +  '.</strong></p>';
                 $('#result').append(result);
+                $(':input[type="submit"]').prop('disabled', false);
             } else {
                 // something unexpected happened
                 $('#result').empty();
                 result = html + '<p class=\"text-primary\"><strong>Ansible-Playbook is ' + data['Status'] +  '</strong></p><p>' +  data['Out'].replace(/\n/g, '<br />') + '</p>';
                 $('#result').append(result);
+                $(':input[type="submit"]').prop('disabled', false);
             }
         } else {
             // rerun in 2 seconds

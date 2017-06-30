@@ -103,7 +103,10 @@ function update_progress(status_url) {
         var job_name = $('#job_name').val();
         var tag = $('#tag').val();
         var html = "";
+
         // update UI
+        $(':input[type="submit"]').prop('disabled', true);
+        $(':input[type="reset"]').prop('disabled', true);
         $('#result').empty();
         $('#result').append("<img src=\"/static/images/loading.gif\" /><span class=\"text-warning\"><strong>" + job_name + "</strong> is Building...</sparn>");
         console.log(data['result']);
@@ -124,6 +127,8 @@ function update_progress(status_url) {
             var result = html + '<p class=\"text-primary\"><strong>Job is ' + job_name + '</strong></p>' +
                 '<p class=\"text-primary\">TAG: <strong>' + tag + '</strong></p>' + html2;
             $('#result').append(result);
+            $(':input[type="submit"]').prop('disabled', false);
+            $(':input[type="reset"]').prop('disabled', false);
         }else if(data['result'] == 'ERROR'){
             // something unexpected happened
             $('#result').empty();
@@ -131,6 +136,8 @@ function update_progress(status_url) {
             result = html + '<p class=\"text-primary\"><strong><strong>Job is ' + job_name +  '</strong></p>' +
                 '<p class=\"text-primary\">TAG: <strong>' + tag + '</strong></p>' + html2;
             $('#result').append(result);
+            $(':input[type="submit"]').prop('disabled', false);
+            $(':input[type="reset"]').prop('disabled', false);
         } else {
             // rerun in 2 seconds
             setTimeout(function() {

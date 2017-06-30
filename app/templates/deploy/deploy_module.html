@@ -135,7 +135,10 @@ function update_progress(status_url) {
         $('input:checkbox[name=deploy_dir]:checked').each(function(){
             deploy_dir.push($(this).val());
         });
+
         // update UI
+        $(':input[type="submit"]').prop('disabled', true);
+        $(':input[type="reset"]').prop('disabled', true);
         $('#result').empty();
         $('#result').append("<img src=\"/static/images/loading.gif\" /><span class=\"text-warning\"><strong>" + module_name + "</strong> is Deploying...</sparn>");
         console.log(data['Status']);
@@ -151,16 +154,22 @@ function update_progress(status_url) {
                 $('#result').empty();
                 result = html + '<p class=\"text-primary\"><strong>Deploy is ' + data['Status'] + '</strong></p><p>' + data['Out'].replace(/\n/g, '<br />') + '</p>';
                 $('#result').append(result);
+                $(':input[type="submit"]').prop('disabled', false);
+                $(':input[type="reset"]').prop('disabled', false);
             }else if(data['Status'] == 'CELERY_FAILURE'){
                 // something unexpected happened
                 $('#result').empty();
                 result = html + '<p class=\"text-primary\"><strong><strong>Deploy is ' + data['Status'] +  '.</strong></p>';
                 $('#result').append(result);
+                $(':input[type="submit"]').prop('disabled', false);
+                $(':input[type="reset"]').prop('disabled', false);
             } else {
                 // something unexpected happened
                 $('#result').empty();
                 result = html + '<p class=\"text-primary\"><strong>Deploy is ' + data['Status'] +  '</strong></p><p>' +  data['Out'].replace(/\n/g, '<br />') + '</p>';
                 $('#result').append(result);
+                $(':input[type="submit"]').prop('disabled', false);
+                $(':input[type="reset"]').prop('disabled', false);
             }
         } else {
             // rerun in 2 seconds
