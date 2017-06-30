@@ -123,15 +123,19 @@ def flower_list():
             uuid = value['uuid']
             args = value['args'][3:-2]
             if value['result']:
-                result = json.loads(str(value['result']).replace('\\\'', '').replace('\"', '^').replace('\'', '"')
+                try:
+                    result = json.loads(re.sub(r" \'([a-zA-Z]+)\' ",r" \1 ",str(value['result']))
+                                    .replace('\', u', ', u').replace('u\'' , '').replace('\']', ']')
+                                    .replace('`fi\'\\n', 'fi ').replace("don't", 'don^t').replace("'s ", '^s ')
+                                    .replace('\': "', '\': \'').replace('", \'', '\', \'')
+                                    .replace('\\\'', '').replace('\"', '^').replace('\'', '"')
                                     .replace('\\x1b', '').replace('\\n', '<br />').replace('\\', '')
                                     .replace('[1;31;40m', '<font color=red>').replace('[1;32;40m', '<font color=green>')
+                                    .replace('[1;33;40m', '<font color=cyan>').replace('[1;34;40m', '<font color=blue>')
                                     .replace('[0m', '</font>'))
-                result = json.loads(
-                    re.sub(r" \'([a-zA-Z]+)\' ", r" \1 ", str(value['result'])).replace('\\\'', '').replace('\"', '^')
-                    .replace('\'', '"').replace('\\x1b', '').replace('\\n', '<br />').replace('\\', '')
-                    .replace('[1;31;40m', '<font color=red>').replace('[1;32;40m', '<font color=green>')
-                    .replace('[0m', '</font>'))
+                except:
+                    print "[ERROR] [json] task-id: " + str(value['uuid'])
+                    result = ''
             else:
                 result = ''
             timestamp = datetime.fromtimestamp(value['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
