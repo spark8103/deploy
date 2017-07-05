@@ -2,7 +2,7 @@
 from flask import render_template, redirect, request, url_for, flash, jsonify, make_response
 from flask_login import login_required, current_user
 from . import ansibleplaybook
-from .forms import AddAnsiblePlaybookForm, AddOsInitForm
+from .forms import AddAnsiblePlaybookForm, AddOsInitForm, AddAnsiblePlaybookTempForm
 from .. import flash_errors
 from config import Config
 from .. import celery_runner
@@ -184,3 +184,30 @@ def get_playbook_vars():
         return jsonify(result)
     else:
         return jsonify({})
+
+
+@ansibleplaybook.route('/ansible-playbook-temp')
+@login_required
+def ansible_playbook_temp():
+    add_ansible_playbook_temp_form = AddAnsiblePlaybookTempForm()
+    return render_template('ansible_playbook/ansible_playbook_temp.html', add_ansible_playbook_temp_form=add_ansible_playbook_temp_form)
+
+
+@ansibleplaybook.route('/ansible-playbook-temp-add', methods=['POST'])
+@login_required
+def ansible_playbook_temp_add():
+    form = AddAnsiblePlaybookTempForm(data=request.get_json())
+    if form.validate_on_submit():
+        hostlist = form.hostlist.data.split()
+        host_list = [i.split(',')[0] for i in hostlist]
+        update_inventory_temp(hostlist)
+        playbook = form.playbook.data
+        extra_var = form.extra_var.data
+        exec_command = str.format("{0} -i {1} --private-key={2} --extra-vars \"{3}\" {4} -l {5}", "ansible-playbook",
+                                  Config.ANSIBLE_TEMP_INVENTORY_FILE, Config.ANSIBLE_KEY, extra_var.strip(), playbook, ":".join(host_list))
+        print "ansible_playbook - " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " : " + exec_command
+        task_result = celery_runner.ansible_playbook_task.apply_async([exec_command])
+        result = {'r': 0, 'task_id': task_result.id, 'Location': url_for('.ansible_playbook_status', task_id=task_result.id)}
+    else:
+        result = {'r': 1, 'error': form.errors}
+    return jsonify(result)

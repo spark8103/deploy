@@ -51,7 +51,9 @@
                         Ansible-Playbook <b class="caret"></b>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="{{ url_for('ansibleplaybook.ansible_playbook') }}">Ansible-Playbook</a></li>
+                        <li><a href="{{ url_for('ansibleplaybook.ansible_playbook') }}">Ansible-Playbook Task</a></li>
+                        <li><a href="{{ url_for('ansibleplaybook.ansible_playbook_temp') }}">Ansible-Playbook Temp Task</a></li>
+                        <li><a href="{{ url_for('ansibleplaybook.os_init') }}">Centos Init Task</a></li>
                         <li><a href="{{ url_for('ansibleplaybook.ansible_playbook_history') }}">Ansible-Playbook History</a></li>
                     </ul>
                 </li>

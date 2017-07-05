@@ -17,5 +17,15 @@ class AddAnsiblePlaybookForm(FlaskForm):
         self.playbook.choices = [(0, 'Choose...')] + [(i, i) for i in get_playbook_list()]
 
 
+class AddAnsiblePlaybookTempForm(FlaskForm):
+    hostlist = TextAreaField('HostList: ', validators=[InputRequired()])
+    playbook = SelectField('Playbook: ', coerce=str, validators=[DataRequired()])
+    extra_var = StringField('Vars: ')
+
+    def __init__(self, *args, **kwargs):
+        super(AddAnsiblePlaybookTempForm, self).__init__(*args, **kwargs)
+        self.playbook.choices = [(0, 'Choose...')] + [(i, i) for i in get_playbook_list()]
+
+
 class AddOsInitForm(FlaskForm):
     hostlist = TextAreaField('HostList', validators=[InputRequired()])

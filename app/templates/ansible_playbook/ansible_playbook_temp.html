@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config['SITE_NAME'] }} - Ansible Playbook Temp Task{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>Ansible Playbook Temp Task</h2>
+</div>
+
+<div class="col-md-12">
+    <form id="ansible_playbook_temp_add" action="{{ url_for('.ansible_playbook_temp_add') }}" method="POST">
+        {{ add_ansible_playbook_temp_form.csrf_token }}
+        <div class="form-group">
+            {{ add_ansible_playbook_temp_form.hostlist.label }}
+            {{ add_ansible_playbook_temp_form.hostlist(class="form-control",placeholder="格式：hostname,ip 每行一台主机") }}
+        </div>
+
+        <div class="form-group">
+            {{ add_ansible_playbook_temp_form.playbook.label }}
+            {{ add_ansible_playbook_temp_form.playbook(class="form-control") }}
+        </div>
+
+        <div class="form-group">
+            {{ add_ansible_playbook_temp_form.extra_var.label(id="label_extra_var", style="display: none;") }}
+            {{ add_ansible_playbook_temp_form.extra_var(class="form-control", style="display: none;",size="50") }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">submit</button>
+    </form>
+</div>
+
+<div class="col-md-12">
+    <hr />
+</div>
+
+<div class="col-md-12">
+    <div class="panel panel-info">
+        <div class="panel-heading">Result</div>
+        <div class="panel-body">
+            <p id="result"></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+function start_os_init_task() {
+    var url = "{{ url_for('.ansible_playbook_temp_add') }}";
+    var csrf_token = $('#csrf_token').val();
+    var hostlist = $('#hostlist').val();
+    var playbook = $('#playbook').val();
+    var extra_var = $('#extra_var').val();
+
+    // send ajax POST request to start background job
+    $.ajax({
+        type: 'POST',
+        data: {'csrf_token':csrf_token, 'hostlist':hostlist, 'playbook':playbook, 'extra_var':extra_var},
+        url: url,
+        success: function(data, status, request) {
+            if (data['r']==0){
+                status_url = data['Location'];
+                console.log("status_url: " + status_url);
+                update_progress(status_url);
+            }else{
+                alert(data['error']);
+                console.log(data['error']);
+            }
+        },
+        error: function() {
+            alert('Unexpected error');
+        }
+    });
+}
+
+function update_progress(status_url) {
+    // send GET request to status URL
+    $.getJSON(status_url, function(data) {
+        var hostlist = $('#hostlist').val();
+
+        // update UI
+        $(':input[type="submit"]').prop('disabled', true);
+        $('#result').empty();
+        $('#result').append("<img src=\"/static/images/loading.gif\" /><span class=\"text-warning\"><strong>" + hostlist + "</strong> is Execing...</sparn>");
+        console.log(data['Status']);
+        if (data['Status'] != 'PENDING' && data['Status'] != 'PROGRESS') {
+            html = "<p class=\"text-primary\">HostList: <strong>" + hostlist + "</strong></p>" +
+                "<p class=\"bg-primary text-warning\">Result: </p>";
+            //html = '';
+
+            if (data['Status'] == 'SUCCESS') {
+                // show result
+                $('#result').empty();
+                result = html + '<p class=\"text-primary\"><strong>Ansible-Playbook is ' + data['Status'] + '</strong></p><p>' + data['Out'].replace(/\n/g, '<br />') + '</p>';
+                $('#result').append(result);
+                $(':input[type="submit"]').prop('disabled', false);
+            }else if(data['Status'] == 'CELERY_FAILURE'){
+                // something unexpected happened
+                $('#result').empty();
+                result = html + '<p class=\"text-primary\"><strong><strong>Ansible-Playbook is ' + data['Status'] +  '.</strong></p>';
+                $('#result').append(result);
+                $(':input[type="submit"]').prop('disabled', false);
+            } else {
+                // something unexpected happened
+                $('#result').empty();
+                result = html + '<p class=\"text-primary\"><strong>Ansible-Playbook is ' + data['Status'] +  '</strong></p><p>' +  data['Out'].replace(/\n/g, '<br />') + '</p>';
+                $('#result').append(result);
+                $(':input[type="submit"]').prop('disabled', false);
+            }
+        } else {
+            // rerun in 2 seconds
+            setTimeout(function() {
+                update_progress(status_url);
+            }, 2000);
+        }
+    });
+}
+
+$(function() {
+        $('#playbook').change(function() {
+        if($('#playbook').val() == 0){
+            $("#extra_var").empty();
+            $("#label_extra_var").hide();
+            $("#extra_var").hide();
+            return false;
+        }
+        var url = "{{ url_for('.get_playbook_vars') }}?playbook=" + $('#playbook').val();
+        $.get(url, function(result){
+            if(result != null && result.split(":")[1] != '' ) {
+                var vars = result.split(":")[1];
+                //alert(vars);
+                $("#extra_var").empty(); //clean select option
+                $("#extra_var").val(vars);
+                $("#label_extra_var").show();
+                $("#extra_var").show();
+            }else{
+                $("#extra_var").empty();
+                $("#label_extra_var").hide();
+                $("#extra_var").hide();
+            };
+        });
+    });
+
+    $('#ansible_playbook_temp_add').submit(function(event) {
+        start_os_init_task();
+        event.preventDefault();
+    });
+});
+</script>
+{% endblock %}
