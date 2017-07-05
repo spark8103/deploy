@@ -201,7 +201,7 @@ def ansible_playbook_temp_add():
         hostlist = form.hostlist.data.split()
         host_list = [i.split(',')[0] for i in hostlist]
         update_inventory_temp(hostlist)
-        playbook = form.playbook.data
+        playbook = os.path.join(Config.ANSIBLE_PATH, form.playbook.data)
         extra_var = form.extra_var.data
         exec_command = str.format("{0} -i {1} --private-key={2} --extra-vars \"{3}\" {4} -l {5}", "ansible-playbook",
                                   Config.ANSIBLE_TEMP_INVENTORY_FILE, Config.ANSIBLE_KEY, extra_var.strip(), playbook, ":".join(host_list))
