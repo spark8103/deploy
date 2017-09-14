@@ -8,27 +8,34 @@
     <h2>Jenkins Building</h2>
 </div>
 
-<div class="col-md-10">
+<div class="col-md-12">
     <form id="jenkins_building" action="{{ url_for('deploy.jenkins_building') }}" method="POST">
         {{ form.csrf_token }}
         <div class="row">
-            <div class="col-6">
+            <div class="col-4">
                 <div class="form-group">
-                    <label class="control-label col-md-2" for="select_module">{{ form.job_name.label }}：</label>
-                    <div class="col-md-4">
+                    <label class="control-label col-md-1" for="select_module">{{ form.job_name.label }}：</label>
+                    <div class="col-md-3">
                         {{ form.job_name(class="form-control") }}
                     </div>
                 </div>
             </div>
 
-            <div class="col-6">
+            <div class="col-4">
                 <div class="form-group">
-                    <label class="col-md-2 control-label" for="tag">{{ form.tag.label }}：</label>
-                    <div class="col-md-4">
+                    <label class="control-label col-md-1" for="tag">{{ form.tag.label }}：</label>
+                    <div class="col-md-3">
                         <select class="form-control" id="tag" name="tag">
                             <option value="0">Choose...</option>
                         </select>
                     </div>
+                </div>
+            </div>
+
+            <div class="col-4">
+                <div class="form-group">
+                    <label class="control-label" for="job_type">{{ form.job_type.label }}：</label>
+                    <span id="job_type"></span>
                 </div>
             </div>
         </div>
@@ -69,8 +76,9 @@
 function start_build_task() {
     var url = "{{ url_for('deploy.jenkins_building_add') }}";
     var csrf_token = $('#csrf_token').val();
-    var job_name = $('#job_name').val()
-    var tag = $('#tag').val()
+    var job_name = $('#job_name').val();
+    var tag = $('#tag').val();
+    var job_type =$('#job_type').text();
     if (job_name == 0){
         alert("Please Select Exec Job.");
         return false;
@@ -79,7 +87,7 @@ function start_build_task() {
     // send ajax POST request to start background job
     $.ajax({
         type: 'POST',
-        data: {'csrf_token':csrf_token, 'job_name':job_name , 'tag':tag},
+        data: {'csrf_token':csrf_token, 'job_name':job_name , 'tag':tag, 'job_type': job_type},
         url: url,
         success: function(data, status, request) {
             if (data['r']==0){
@@ -121,11 +129,12 @@ function update_progress(status_url) {
             var revisions = data['revisions'];
             var html2 = '';
             for (i in revisions) {
-                html2 += "<p class=\"text-primary\">SVN: <strong>" + revisions[i].module +
+                html2 += "<p class=\"text-primary\">Repo INFO: <strong>" + revisions[i].module +
                     "</strong></p><p class=\"text-primary\">Version: <strong>" + revisions[i].revision + "</strong></p>";
             }
             var result = html + '<p class=\"text-primary\"><strong>Job is ' + job_name + '</strong></p>' +
-                '<p class=\"text-primary\">TAG: <strong>' + tag + '</strong></p>' + html2;
+                '<p class=\"text-primary\">TAG: <strong>' + tag + '</strong></p>' + html2 +
+                '<p class="text-primary">Build_number: <strong>' + data['build_number'] + '</strong></p>';
             $('#result').append(result);
             $(':input[type="submit"]').prop('disabled', false);
             $(':input[type="reset"]').prop('disabled', false);
@@ -152,13 +161,15 @@ $(function() {
         if($('#job_name').val() == 0){
             $("#tag").empty();
             $("#tag").append("<option value=\"0\">Choose...</option>");
+            $("#job_type").empty();
             return false;
         }
-        var url = "{{ url_for('deploy.svn_tags') }}?job_name=" + $('#job_name').val();
+        var url = "{{ url_for('deploy.tags_info') }}?job_name=" + $('#job_name').val();
         $.get(url, function(result){
+            $("#job_type").text(result['job_type']);
             $("#tag").empty(); //clean select option
-            for(var item in result){
-                $("#tag").append("<option value=" + result[item] + ">" + result[item] + "</option>");
+            for(var item in result['tags']){
+                $("#tag").append("<option value=" + result['tags'][item] + ">" + result['tags'][item] + "</option>");
             }
         });
     });

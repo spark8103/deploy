@@ -49,6 +49,10 @@ class Config:
     SVN_USER = "apprun"
     SVN_PASSWORD = "apprun"
 
+    # GITLAB configuration
+    GITLAB_SERVER = 'http://gitlab.bdeastmoney.com'
+    GITLAB_TOKEN = 'tokkkkkk-BPXg'
+
     # ansible configuration
     ANSIBLE_INVENTORY_FILE = 'd://spark//git//deploy//scripts//inventory_prod'
     ANSIBLE_TEMP_INVENTORY_FILE = 'd://spark//git//deploy//scripts//inventory_temp'

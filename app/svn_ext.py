@@ -13,5 +13,6 @@ def svn_tag_list(url, tags_filter, username=svn_username, password=svn_password)
         #tag_list = [i.replace('/', '') for i in svn_remote.list() if((not i.find(tags_filter)) or (i.find('subversionservers')))]
         tag_list = [i.replace('/', '') for i in svn_remote.list() if not i.find(tags_filter)]
     else:
-        tag_list = [i.replace('/', '') for i in svn_remote.list() if not i.find('bd-')]
+        #tag_list = [i.replace('/', '') for i in svn_remote.list() if not i.find('bd-')]
+        tag_list = [i.replace('/', '') for i in svn_remote.list() if i.find('warning:') <= 0]
     return sorted(tag_list, reverse=True)

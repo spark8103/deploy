@@ -15,3 +15,5 @@ ansible==2.3.0.0
 msgpack-python==0.4.8
 Flask-PageDown==0.2.2
 Markdown==2.6.8
+requests==2.18.1
+python-gitlab==0.21.2

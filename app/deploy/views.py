@@ -4,8 +4,9 @@ from flask_login import login_required, current_user
 from . import deploy
 from .. import flash_errors
 from .forms import AddDeployForm, JenkinsExecForm
-from ..jenkins_ext import job_get_number, job_build, job_get_svn, get_job_build_status
+from ..jenkins_ext import job_get_number, job_build, job_get_svn, get_job_build_status, get_repo_info
 from ..svn_ext import svn_tag_list
+from ..gitlab_ext import gitlab_tag_list
 from ..ansible_ext import get_inventory_hosts
 from config import Config
 from .. import celery_runner
@@ -90,9 +91,9 @@ def jenkins_building_add():
     if form.validate_on_submit():
         job_name = form.job_name.data
         tag = form.tag.data
-        # building_number = job_build(job_name=job, tag=tag)
-        building_number = job_build(job_name=job_name)
-        status_url = url_for('.jenkins_building_status', job_name=job_name, build_number=building_number)
+        job_type = form.job_type.data
+        building_number = job_build(job_name=job_name, tag=tag, job_type=job_type)
+        status_url = url_for('.jenkins_building_status', job_name=job_name, build_number=building_number, job_type=job_type)
         result = {'r': 0, 'job_name':job_name, 'tag':tag, 'building_number':building_number,
                   'Location': status_url}
     else:
@@ -105,12 +106,13 @@ def jenkins_building_add():
 def jenkins_building_status():
     job_name = request.args.get('job_name')
     build_number = request.args.get('build_number')
+    job_type = request.args.get('job_type')
     if job_name is None and build_number is None:
         return jsonify({"result": "ERROR",
                         "build_number": 0,
                         "out": "Please post job_name and build_number",
                         'building': 'false'})
-    re = get_job_build_status(job_name, int(build_number))
+    re = get_job_build_status(job_name, int(build_number), job_type)
     return jsonify(re)
 
 
@@ -135,6 +137,25 @@ def svn_tags():
         else:
             svn_tag = {}
         return jsonify(svn_tag)
+    else:
+        return jsonify({})
+
+
+@deploy.route('/tags-info')
+@login_required
+def tags_info():
+    job_name = request.args.get('job_name')
+    if job_name:
+        repo_info = get_repo_info(job_name)
+        if repo_info['job_type'] == 'svn' and repo_info['tag_dir']:
+            # tag_info = svn_tag_list(url=repo_info['tag_dir'], tags_filter=repo_info['tags_filter'])
+            tag_info = {'job_type': 'svn', 'tags': svn_tag_list(url=repo_info['tag_dir'], tags_filter=repo_info['tags_filter'])}
+        elif repo_info['job_type'] == 'git':
+            # tag_info = gitlab_tag_list(url=repo_info['git_url'])
+            tag_info = {'job_type': 'git', 'tags': gitlab_tag_list(url=repo_info['git_url'])}
+        else:
+            tag_info = {}
+        return jsonify(tag_info)
     else:
         return jsonify({})
 
