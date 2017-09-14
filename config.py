@@ -50,7 +50,7 @@ class Config:
     SVN_PASSWORD = "apprun"
 
     # GITLAB configuration
-    GITLAB_SERVER = 'http://gitlab.bdeastmoney.com'
+    GITLAB_SERVER = 'http://gitlab.ttttttt.com'
     GITLAB_TOKEN = 'tokkkkkk-BPXg'
 
     # ansible configuration
